@@ -6,7 +6,7 @@ import type { Station } from '../data/stations'
 
 type NexusPortalProps = {
   station: Station
-  onSelect: (id: string) => void
+  onSelect: (id: Station['id']) => void
 }
 
 export function NexusPortal({ station, onSelect }: NexusPortalProps) {

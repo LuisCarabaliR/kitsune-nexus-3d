@@ -1,10 +1,10 @@
 import { OrbitControls, Sparkles, Stars } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import { stations } from '../data/stations'
+import { stations, type Station } from '../data/stations'
 import { NexusPortal } from './NexusPortal'
 
 type NexusSceneProps = {
-  onSelect: (id: string) => void
+  onSelect: (id: Station['id']) => void
 }
 
 export function NexusScene({ onSelect }: NexusSceneProps) {
