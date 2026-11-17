@@ -66,10 +66,11 @@ export default function App() {
         <div className="archive-intro">
           <p className="eyebrow">REGISTRO DEL NEXUS · PERFIL</p>
           <h2 id="archive-title">Archivo del Explorador</h2>
-          <p className="archive-name">Luis CarabaliR</p>
+          <p className="archive-name">Luis Carabalí Rivera</p>
+          <p className="archive-role">Desarrollador de Software · Backend &amp; Fullstack</p>
           <p>
-            Diseñador en formación de experiencias Web 3D. Exploro cómo la interacción, el aprendizaje y los universos visuales
-            pueden encontrarse en prototipos navegables.
+            Desarrollador de software en Cali, Colombia, con experiencia en aplicaciones web, APIs, bases de datos relacionales e
+            infraestructura cloud. Combino ese enfoque técnico con experimentación en experiencias Web 3D interactivas.
           </p>
           <a className="archive-link" href="https://github.com/LuisCarabaliR/kitsune-nexus-3d" target="_blank" rel="noreferrer">
             Ver repositorio ↗
@@ -78,7 +79,7 @@ export default function App() {
         <div className="archive-grid">
           <article>
             <p className="panel-label">HABILIDADES ACTIVAS</p>
-            <div className="skill-tags"><span>React</span><span>Three.js</span><span>React Three Fiber</span><span>UI/UX</span></div>
+            <div className="skill-tags"><span>JavaScript</span><span>TypeScript</span><span>SQL</span><span>React</span><span>Three.js</span><span>AWS</span><span>Docker</span></div>
           </article>
           <article>
             <p className="panel-label">PROYECTO DESTACADO</p>
@@ -86,8 +87,8 @@ export default function App() {
             <p>Hub interactivo con portales, salas temáticas, cámara 3D y aprendizaje visual.</p>
           </article>
           <article>
-            <p className="panel-label">PRÓXIMA MISIÓN</p>
-            <p>Ampliar las salas con más retos visuales y modelos 3D propios.</p>
+            <p className="panel-label">TRAYECTORIA</p>
+            <p>Consultor IT independiente desde 2024. Formación en Ingeniería de Sistemas y Tecnólogo en Sistemas de Información.</p>
           </article>
         </div>
       </section>

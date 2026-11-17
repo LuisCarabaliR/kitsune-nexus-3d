@@ -37,7 +37,9 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: /Archivo del Explorador/i })).toBeInTheDocument()
-    expect(screen.getByText(/Luis CarabaliR/i)).toBeInTheDocument()
+    expect(screen.getByText(/Luis Carabalí Rivera/i)).toBeInTheDocument()
+    expect(screen.getByText(/Backend & Fullstack/i)).toBeInTheDocument()
+    expect(screen.queryByText(/WhatsApp/i)).not.toBeInTheDocument()
     expect(screen.getByText('React')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Ver repositorio/i })).toHaveAttribute('href', expect.stringContaining('github.com'))
   })
