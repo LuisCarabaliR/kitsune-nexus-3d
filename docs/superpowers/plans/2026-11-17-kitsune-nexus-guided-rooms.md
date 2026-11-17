@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Añadir salas 3D guiadas y navegables desde el Nexus Central.
+**Goal:** Añadir salas 3D navegables y un perfil profesional propio desde el Nexus Central.
 
-**Architecture:** Un modelo puro define el estado `nexus`/`room` y el contenido específico de cada estación. `App` conecta el modelo con los controles HTML y `NexusScene` alterna el hub existente con una nueva escena `NexusRoom` de primitivas animadas.
+**Architecture:** Un modelo puro define el estado `nexus`/`room`, el contenido específico de cada estación y el vector de desplazamiento. `App` conecta el modelo con los controles HTML, el Archivo del Explorador y `NexusScene` alterna el hub existente con una nueva escena `NexusRoom` de primitivas animadas y cámara de teclado.
 
 **Tech Stack:** React, TypeScript, Vite, React Three Fiber, Drei, Vitest.
 
@@ -15,6 +15,7 @@
 - No añadir dependencias ni recursos externos.
 - Conservar los tres portales y los enlaces publicados.
 - Los controles HTML deben permitir navegar sin depender de clics sobre WebGL.
+- El perfil profesional solo declara datos verificados en el proyecto y no incluye contacto inventado.
 
 ## Review Focus
 

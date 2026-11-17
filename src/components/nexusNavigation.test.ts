@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { roomDetails, enterRoom, returnToNexus } from './nexusNavigation'
+import { movementFromKeys } from './roomMovement'
 import { stations } from '../data/stations'
 
 describe('guided room navigation', () => {
@@ -15,5 +16,10 @@ describe('guided room navigation', () => {
 
     expect(details.every((detail) => detail.learningPoints.length === 3)).toBe(true)
     expect(new Set(details.map((detail) => detail.mission)).size).toBe(3)
+  })
+
+  it('maps keyboard input to a first-person movement vector', () => {
+    expect(movementFromKeys(new Set(['KeyW', 'KeyD']))).toEqual([1, 0, -1])
+    expect(movementFromKeys(new Set(['ArrowDown']))).toEqual([0, 0, 1])
   })
 })

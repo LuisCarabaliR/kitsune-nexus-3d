@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { NexusScene } from './components/NexusScene'
 import { getStation, stations } from './data/stations'
+import { enterRoom, returnToNexus, type ExperienceMode } from './components/nexusNavigation'
 import './styles.css'
 
 export default function App() {
   const [selectedId, setSelectedId] = useState(stations[0].id)
+  const [mode, setMode] = useState<ExperienceMode>('nexus')
   const selectedStation = useMemo(() => getStation(selectedId) ?? stations[0], [selectedId])
 
   return (
@@ -21,7 +23,10 @@ export default function App() {
               className={station.id === selectedStation.id ? 'station-button selected' : 'station-button'}
               key={station.id}
               type="button"
-              onClick={() => setSelectedId(station.id)}
+              onClick={() => {
+                setSelectedId(station.id)
+                setMode('nexus')
+              }}
             >
               <span>{station.name}</span>
               <small>{station.subtitle}</small>
@@ -31,21 +36,60 @@ export default function App() {
       </section>
 
       <section className="scene-layout" aria-label="Exploración 3D">
-        <NexusScene onSelect={setSelectedId} />
+        <NexusScene onSelect={(id) => {
+          setSelectedId(id)
+          setMode('nexus')
+        }} mode={mode} station={selectedStation} />
         <aside className="station-panel" aria-live="polite">
-          <p className="panel-label">ESTACIÓN SELECCIONADA</p>
-          <h2>{selectedStation.name}</h2>
-          <p>{selectedStation.description}</p>
+          <p className="panel-label">{mode === 'room' ? 'SALA ACTIVA' : 'ESTACIÓN SELECCIONADA'}</p>
+          <h2>{mode === 'room' ? `Sala: ${selectedStation.name}` : selectedStation.name}</h2>
+          <p>{mode === 'room' ? selectedStation.room.mission : selectedStation.description}</p>
           <div className="theme-swatches" aria-label={`Colores de ${selectedStation.name}`}>
             <span style={{ background: selectedStation.theme.primary }} />
             <span style={{ background: selectedStation.theme.secondary }} />
           </div>
-          <p className="hint">Haz clic en un portal o usa las estaciones para cambiar de mundo.</p>
+          {mode === 'room' ? <>
+            <ul className="learning-points">{selectedStation.room.learningPoints.map((point) => <li key={point}>{point}</li>)}</ul>
+            <button className="room-action secondary" type="button" onClick={() => setMode(returnToNexus({ mode, stationId: selectedId }).mode)}>Volver al Nexus</button>
+          </> : <>
+            <button className="room-action" type="button" onClick={() => setMode(enterRoom(selectedId).mode)}>Entrar a la sala</button>
+            <p className="hint">Haz clic en un portal o usa las estaciones para cambiar de mundo.</p>
+          </>}
         </aside>
       </section>
 
       <section className="accessibility-note" aria-label="Controles de la escena">
-        <strong>Controles:</strong> arrastra para orbitar, usa la rueda para acercar y selecciona un portal para conocer su estación.
+        <strong>Controles:</strong> arrastra para orbitar y usa la rueda para acercar. Selecciona un portal y entra a su sala para iniciar el recorrido guiado.
+      </section>
+
+      <section className="explorer-archive" aria-labelledby="archive-title">
+        <div className="archive-intro">
+          <p className="eyebrow">REGISTRO DEL NEXUS · PERFIL</p>
+          <h2 id="archive-title">Archivo del Explorador</h2>
+          <p className="archive-name">Luis CarabaliR</p>
+          <p>
+            Diseñador en formación de experiencias Web 3D. Exploro cómo la interacción, el aprendizaje y los universos visuales
+            pueden encontrarse en prototipos navegables.
+          </p>
+          <a className="archive-link" href="https://github.com/LuisCarabaliR/kitsune-nexus-3d" target="_blank" rel="noreferrer">
+            Ver repositorio ↗
+          </a>
+        </div>
+        <div className="archive-grid">
+          <article>
+            <p className="panel-label">HABILIDADES ACTIVAS</p>
+            <div className="skill-tags"><span>React</span><span>Three.js</span><span>React Three Fiber</span><span>UI/UX</span></div>
+          </article>
+          <article>
+            <p className="panel-label">PROYECTO DESTACADO</p>
+            <h3>Kitsune Nexus 3D</h3>
+            <p>Hub interactivo con portales, salas temáticas, cámara 3D y aprendizaje visual.</p>
+          </article>
+          <article>
+            <p className="panel-label">PRÓXIMA MISIÓN</p>
+            <p>Ampliar las salas con más retos visuales y modelos 3D propios.</p>
+          </article>
+        </div>
       </section>
     </main>
   )
