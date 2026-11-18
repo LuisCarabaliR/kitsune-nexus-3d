@@ -13,6 +13,12 @@ export type Station = {
   room: {
     mission: string
     learningPoints: [string, string, string]
+    challenge: {
+      question: string
+      options: [string, string, string]
+      correctOption: number
+      explanation: string
+    }
   }
 }
 
@@ -26,6 +32,12 @@ export const stations: Station[] = [
     room: {
       mission: 'Estabiliza la avenida lumínica y equilibra sus emisivos.',
       learningPoints: ['Contraste neón', 'Emisivos y bloom', 'Composición urbana'],
+      challenge: {
+        question: '¿Qué propiedad hace que un material parezca emitir luz en una escena 3D?',
+        options: ['Emissive', 'Roughness', 'Normal map'],
+        correctOption: 0,
+        explanation: 'Emissive aporta color propio al material; bloom puede reforzar visualmente ese brillo.',
+      },
     },
   },
   {
@@ -37,6 +49,12 @@ export const stations: Station[] = [
     room: {
       mission: 'Activa los anillos suspendidos y descubre sus capas atmosféricas.',
       learningPoints: ['Profundidad aérea', 'Capas orbitales', 'Movimiento ambiental'],
+      challenge: {
+        question: '¿Qué recurso ayuda a percibir profundidad entre objetos distantes?',
+        options: ['Niebla atmosférica', 'Un solo color plano', 'Eliminar la cámara'],
+        correctOption: 0,
+        explanation: 'La niebla atenúa objetos lejanos y ayuda a crear profundidad visual.',
+      },
     },
   },
   {
@@ -48,6 +66,12 @@ export const stations: Station[] = [
     room: {
       mission: 'Sincroniza el núcleo mecha para revelar sus materiales metálicos.',
       learningPoints: ['Metalness', 'Rugosidad PBR', 'Escala mecánica'],
+      challenge: {
+        question: '¿Cuál par de propiedades define gran parte de un material PBR metálico?',
+        options: ['Metalness y roughness', 'Tamaño de texto y opacidad', 'Solo el color de fondo'],
+        correctOption: 0,
+        explanation: 'Metalness define el carácter metálico y roughness controla la dispersión de los reflejos.',
+      },
     },
   },
 ]

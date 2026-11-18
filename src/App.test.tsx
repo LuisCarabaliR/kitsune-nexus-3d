@@ -61,4 +61,13 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: /Activar núcleo desde escena/i }))
     expect(screen.getByText(/Núcleos estabilizados: 1\/3/i)).toBeInTheDocument()
   })
+
+  it('enters any portal directly from the Nexus scene without activating its core', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Escena del Nexus/i }))
+    expect(screen.getByRole('heading', { name: /Sala: Hangar Mecha/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Iniciar desafío opcional/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Volver al Nexus/i })).toBeInTheDocument()
+  })
 })

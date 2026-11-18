@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { roomDetails, enterRoom, returnToNexus } from './nexusNavigation'
-import { movementFromKeys } from './roomMovement'
+import { advanceJump, moveExplorer, movementFromKeys } from './roomMovement'
 import { activateCore, createMission, isPortalUnlocked, missionProgress } from './nexusMission'
 import { stations } from '../data/stations'
 
@@ -36,5 +36,16 @@ describe('guided room navigation', () => {
 
     expect(isPortalUnlocked(mission, 'wind')).toBe(true)
     expect(isPortalUnlocked(mission, 'mecha')).toBe(false)
+  })
+
+  it('stops the explorer before crossing a plaza pylon', () => {
+    expect(moveExplorer([0, 0, 4.8], [1, 0, 0], 4)).toEqual([0, 0, 4.8])
+  })
+
+  it('launches the explorer upward when space queues a jump from the ground', () => {
+    const jumped = advanceJump({ height: 0, velocity: 0 }, true, 0.05)
+
+    expect(jumped.height).toBeGreaterThan(0)
+    expect(jumped.velocity).toBeGreaterThan(0)
   })
 })

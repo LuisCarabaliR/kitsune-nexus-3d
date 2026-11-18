@@ -45,7 +45,14 @@ h1 { margin: .35rem 0; font-size: clamp(2.6rem, 7vw, 5.6rem); letter-spacing: -.
 .theme-swatches { display: flex; gap: .45rem; }
 .theme-swatches span { width: 22px; height: 22px; border-radius: 999px; box-shadow: 0 0 16px currentColor; }
 .hint { margin-bottom: 0; color: #a99cc9 !important; font-size: .78rem; }
-.portal-locked { margin: 1rem 0 0; color: #ffd4a7 !important; font-size: .86rem; }
+.challenge-card { display: grid; gap: .6rem; margin-top: 1rem; padding: .9rem; border: 1px solid rgba(124, 236, 255, .3); border-radius: .85rem; background: rgba(8, 17, 43, .72); }
+.challenge-card .panel-label { margin: 0; }
+.challenge-question { margin: 0; color: #f2edff !important; font-weight: 750; }
+.challenge-options { display: grid; gap: .45rem; }
+.challenge-options button { padding: .55rem .65rem; border: 1px solid rgba(124, 236, 255, .36); border-radius: .55rem; color: #e7faff; background: rgba(28, 20, 67, .72); cursor: pointer; text-align: left; }
+.challenge-options button:hover, .challenge-options button:focus-visible { border-color: #7cecff; background: rgba(45, 77, 124, .72); outline: none; }
+.challenge-feedback { margin: 0; color: #ffd6b0 !important; font-size: .84rem; }
+.challenge-feedback.correct { color: #98ffdd !important; }
 .room-action { margin-top: 1rem; padding: .68rem .95rem; border: 1px solid #7cecff; border-radius: .7rem; color: #07111b; background: linear-gradient(100deg, #7cecff, #c674ff); cursor: pointer; font-weight: 800; letter-spacing: .03em; }
 .room-action.secondary { color: #e9e1ff; background: rgba(21, 12, 52, .9); }
 .room-action:hover, .room-action:focus-visible { filter: brightness(1.16); outline: 2px solid #fff; outline-offset: 2px; }

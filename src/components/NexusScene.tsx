@@ -59,7 +59,7 @@ function NexusPlaza({ activeCoreIds, onActivateCore, onSelect }: NexusPlazaProps
       <mesh rotation={[0, Math.PI / 2.8, Math.PI / 2]}><torusGeometry args={[2.18, 0.035, 12, 88]} /><meshBasicMaterial color="#7cecff" transparent opacity={0.7} /></mesh>
     </group>
     {stations.map((item) => <NexusEnergyCore key={`core-${item.id}`} station={item} position={corePositions[item.id]} active={activeCoreIds.includes(item.id)} onActivate={onActivateCore} />)}
-    {stations.map((item) => <NexusPortal key={item.id} station={item} unlocked={activeCoreIds.includes(item.id)} onSelect={onSelect} />)}
+    {stations.map((item) => <NexusPortal key={item.id} station={item} unlocked onSelect={onSelect} />)}
     <NexusExplorer />
   </>
 }

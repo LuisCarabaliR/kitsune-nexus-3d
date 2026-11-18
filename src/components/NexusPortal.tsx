@@ -1,4 +1,4 @@
-import { Text } from '@react-three/drei'
+import { Sparkles, Text } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useRef, useState } from 'react'
 import type { Group } from 'three'
@@ -10,14 +10,23 @@ type NexusPortalProps = {
   onSelect: (id: Station['id']) => void
 }
 
+export function vortexPulse(elapsedTime: number): number {
+  return 1 + Math.sin(elapsedTime) * 0.12
+}
+
 export function NexusPortal({ station, unlocked, onSelect }: NexusPortalProps) {
   const group = useRef<Group>(null)
+  const vortex = useRef<Group>(null)
   const [hovered, setHovered] = useState(false)
 
   useFrame(({ clock }) => {
     if (!group.current) return
     group.current.rotation.y = Math.sin(clock.elapsedTime * 0.45 + station.theme.position[0]) * 0.13
     group.current.position.y = station.theme.position[1] + Math.sin(clock.elapsedTime + station.theme.position[0]) * 0.12
+    if (vortex.current) {
+      vortex.current.rotation.z = clock.elapsedTime * 1.15
+      vortex.current.scale.setScalar(vortexPulse(clock.elapsedTime + station.theme.position[0]))
+    }
   })
 
   return (
@@ -45,6 +54,17 @@ export function NexusPortal({ station, unlocked, onSelect }: NexusPortalProps) {
         <circleGeometry args={[0.9, 64]} />
         <meshBasicMaterial color={unlocked ? station.theme.secondary : '#151322'} transparent opacity={unlocked ? hovered ? 0.62 : 0.32 : 0.24} />
       </mesh>
+      <group ref={vortex} rotation={[0, 0, 0]}>
+        {[0, Math.PI / 3, (Math.PI * 2) / 3].map((rotation) => <mesh key={rotation} rotation={[Math.PI / 2, 0, rotation]}>
+          <torusGeometry args={[0.58, 0.045, 10, 48, Math.PI * 1.45]} />
+          <meshBasicMaterial color={station.theme.primary} transparent opacity={0.82} />
+        </mesh>)}
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.18, 0.78, 64]} />
+          <meshBasicMaterial color={station.theme.secondary} transparent opacity={0.28} />
+        </mesh>
+      </group>
+      <Sparkles count={36} scale={[1.9, 1.9, 0.3]} size={2.4} speed={0.8} color={station.theme.secondary} />
       <pointLight color={unlocked ? station.theme.primary : '#333047'} intensity={unlocked ? hovered ? 24 : 12 : 2} distance={5} />
       <Text position={[0, -1.5, 0]} fontSize={0.24} color="#f5f1ff" anchorX="center">
         {unlocked ? station.name : `${station.name} · BLOQUEADO`}

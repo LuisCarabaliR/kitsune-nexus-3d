@@ -2,15 +2,26 @@ import { Float } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
 import type { Group } from 'three'
-import { movementFromKeys } from './roomMovement'
+import { advanceJump, moveExplorer, movementFromKeys } from './roomMovement'
 
 export function NexusExplorer() {
   const explorer = useRef<Group>(null)
   const pressedKeys = useRef(new Set<string>())
+  const jumpQueued = useRef(false)
+  const jump = useRef({ height: 0, velocity: 0 })
 
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => pressedKeys.current.add(event.code)
-    const onKeyUp = (event: KeyboardEvent) => pressedKeys.current.delete(event.code)
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.code === 'Space') {
+        event.preventDefault()
+        if (!event.repeat) jumpQueued.current = true
+      }
+      pressedKeys.current.add(event.code)
+    }
+    const onKeyUp = (event: KeyboardEvent) => {
+      if (event.code === 'Space') event.preventDefault()
+      pressedKeys.current.delete(event.code)
+    }
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
     return () => {
@@ -21,11 +32,15 @@ export function NexusExplorer() {
 
   useFrame((_, delta) => {
     if (!explorer.current) return
+    jump.current = advanceJump(jump.current, jumpQueued.current, delta)
+    jumpQueued.current = false
+    explorer.current.position.y = -0.7 + jump.current.height
     const [x, , z] = movementFromKeys(pressedKeys.current)
     if (x || z) {
       const speed = 2.4 * delta
-      explorer.current.position.x = Math.max(-7.4, Math.min(7.4, explorer.current.position.x + x * speed))
-      explorer.current.position.z = Math.max(-7.4, Math.min(7.4, explorer.current.position.z + z * speed))
+      const next = moveExplorer([explorer.current.position.x, 0, explorer.current.position.z], [x, 0, z], speed)
+      explorer.current.position.x = next[0]
+      explorer.current.position.z = next[2]
       explorer.current.rotation.y = Math.atan2(x, z)
     }
   })

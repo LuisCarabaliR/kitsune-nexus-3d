@@ -9,9 +9,20 @@ export default function App() {
   const [selectedId, setSelectedId] = useState(stations[0].id)
   const [mode, setMode] = useState<ExperienceMode>('nexus')
   const [mission, setMission] = useState(createMission)
+  const [challengeOpen, setChallengeOpen] = useState(false)
+  const [chosenOption, setChosenOption] = useState<number | null>(null)
   const selectedStation = useMemo(() => getStation(selectedId) ?? stations[0], [selectedId])
-  const selectedPortalUnlocked = isPortalUnlocked(mission, selectedStation.id)
   const progress = missionProgress(mission)
+  const leaveRoom = () => {
+    setChallengeOpen(false)
+    setChosenOption(null)
+    setMode(returnToNexus({ mode, stationId: selectedId }).mode)
+  }
+  const enterSelectedRoom = () => {
+    setChallengeOpen(false)
+    setChosenOption(null)
+    setMode(enterRoom(selectedId).mode)
+  }
 
   return (
     <main className="app-shell">
@@ -54,6 +65,8 @@ export default function App() {
               onClick={() => {
                 setSelectedId(station.id)
                 setMode('nexus')
+                setChallengeOpen(false)
+                setChosenOption(null)
               }}
             >
               <span>{station.name}</span>
@@ -66,7 +79,9 @@ export default function App() {
       <section className="scene-layout" aria-label="Exploración 3D">
         <NexusScene onSelect={(id) => {
           setSelectedId(id)
-          setMode('nexus')
+          setChallengeOpen(false)
+          setChosenOption(null)
+          setMode(enterRoom(id).mode)
         }} mode={mode} station={selectedStation} activeCoreIds={mission.activeCoreIds} onActivateCore={(id) => setMission((currentMission) => activateCore(currentMission, id))} />
         <aside className="station-panel" aria-live="polite">
           <p className="panel-label">{mode === 'room' ? 'SALA ACTIVA' : 'ESTACIÓN SELECCIONADA'}</p>
@@ -78,20 +93,25 @@ export default function App() {
           </div>
           {mode === 'room' ? <>
             <ul className="learning-points">{selectedStation.room.learningPoints.map((point) => <li key={point}>{point}</li>)}</ul>
-            <button className="room-action secondary" type="button" onClick={() => setMode(returnToNexus({ mode, stationId: selectedId }).mode)}>Volver al Nexus</button>
+            {challengeOpen ? <section className="challenge-card" aria-label="Desafío opcional">
+              <p className="panel-label">DESAFÍO OPCIONAL</p>
+              <p className="challenge-question">{selectedStation.room.challenge.question}</p>
+              <div className="challenge-options">
+                {selectedStation.room.challenge.options.map((option, index) => <button key={option} type="button" onClick={() => setChosenOption(index)}>{option}</button>)}
+              </div>
+              {chosenOption !== null && <p className={chosenOption === selectedStation.room.challenge.correctOption ? 'challenge-feedback correct' : 'challenge-feedback'}>{chosenOption === selectedStation.room.challenge.correctOption ? `Correcto. ${selectedStation.room.challenge.explanation}` : `Inténtalo de nuevo. ${selectedStation.room.challenge.explanation}`}</p>}
+              <button className="room-action secondary" type="button" onClick={() => { setChallengeOpen(false); setChosenOption(null) }}>Seguir explorando</button>
+            </section> : <button className="room-action" type="button" onClick={() => setChallengeOpen(true)}>Iniciar desafío opcional</button>}
+            <button className="room-action secondary" type="button" onClick={leaveRoom}>Volver al Nexus</button>
           </> : <>
-            {selectedPortalUnlocked ? (
-              <button className="room-action" type="button" onClick={() => setMode(enterRoom(selectedId).mode)}>Entrar a {selectedStation.name}</button>
-            ) : (
-              <p className="portal-locked">Portal bloqueado: activa el núcleo de {selectedStation.name} para entrar.</p>
-            )}
-            <p className="hint">Activa núcleos en el panel de misión y usa las estaciones para cambiar de mundo.</p>
+            <button className="room-action" type="button" onClick={enterSelectedRoom}>Entrar a {selectedStation.name}</button>
+            <p className="hint">Los núcleos son opcionales: entra a cualquier portal, completa el desafío si quieres y vuelve para explorar otro.</p>
           </>}
         </aside>
       </section>
 
       <section className="accessibility-note" aria-label="Controles de la escena">
-        <strong>Controles:</strong> arrastra para orbitar y usa la rueda para acercar. Selecciona un portal y entra a su sala para iniciar el recorrido guiado.
+        <strong>Controles:</strong> usa W, A, S, D o flechas para mover el explorador; las estructuras y el borde de la plaza bloquean el paso. Haz clic en un portal para entrar a su sala.
       </section>
 
       <section className="explorer-archive" aria-labelledby="archive-title">
