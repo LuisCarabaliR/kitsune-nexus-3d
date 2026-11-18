@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { roomDetails, enterRoom, returnToNexus } from './nexusNavigation'
-import { advanceJump, moveExplorer, movementFromKeys } from './roomMovement'
+import { advanceJump, explorerWalkSwing, moveExplorer, movementFromKeys } from './roomMovement'
 import { activateCore, createMission, isPortalUnlocked, missionProgress } from './nexusMission'
 import { stations } from '../data/stations'
 
@@ -47,5 +47,10 @@ describe('guided room navigation', () => {
 
     expect(jumped.height).toBeGreaterThan(0)
     expect(jumped.velocity).toBeGreaterThan(0)
+  })
+
+  it('animates the explorer stride only while moving', () => {
+    expect(explorerWalkSwing(Math.PI / 8, false)).toBe(0)
+    expect(explorerWalkSwing(Math.PI / 8, true)).not.toBe(0)
   })
 })

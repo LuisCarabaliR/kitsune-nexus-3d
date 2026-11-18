@@ -29,3 +29,7 @@ export function advanceJump(state: JumpState, jumpQueued: boolean, delta: number
 
   return height === 0 ? { height, velocity: 0 } : { height, velocity }
 }
+
+export function explorerWalkSwing(elapsedTime: number, moving: boolean): number {
+  return moving ? Math.sin(elapsedTime * 4) * 0.55 : 0
+}
