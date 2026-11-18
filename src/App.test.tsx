@@ -3,10 +3,11 @@ import '@testing-library/jest-dom/vitest'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('./components/NexusScene', () => ({
-  NexusScene: ({ onSelect, onActivateCore }: { onSelect: (id: string) => void, onActivateCore?: (id: 'mecha') => void }) => (
+  NexusScene: ({ onSelect, onActivateCore, onReturnToNexus }: { onSelect: (id: string) => void, onActivateCore?: (id: 'mecha') => void, onReturnToNexus?: () => void }) => (
     <div>
       <button type="button" onClick={() => onSelect('mecha')}>Escena del Nexus</button>
       <button type="button" onClick={() => onActivateCore?.('mecha')}>Activar núcleo desde escena</button>
+      <button type="button" onClick={() => onReturnToNexus?.()}>Portal de regreso 3D</button>
     </div>
   ),
 }))
@@ -69,5 +70,15 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Sala: Hangar Mecha/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Iniciar desafío opcional/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Volver al Nexus/i })).toBeInTheDocument()
+  })
+
+  it('returns to the Nexus from the 3D return portal', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Escena del Nexus/i }))
+    expect(screen.getByRole('heading', { name: /Sala: Hangar Mecha/i })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Portal de regreso 3D/i }))
+
+    expect(screen.getByRole('button', { name: /Entrar a Hangar Mecha/i })).toBeInTheDocument()
   })
 })

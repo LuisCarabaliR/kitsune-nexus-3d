@@ -82,7 +82,7 @@ export default function App() {
           setChallengeOpen(false)
           setChosenOption(null)
           setMode(enterRoom(id).mode)
-        }} mode={mode} station={selectedStation} activeCoreIds={mission.activeCoreIds} onActivateCore={(id) => setMission((currentMission) => activateCore(currentMission, id))} />
+        }} mode={mode} station={selectedStation} activeCoreIds={mission.activeCoreIds} onActivateCore={(id) => setMission((currentMission) => activateCore(currentMission, id))} onReturnToNexus={leaveRoom} />
         <aside className="station-panel" aria-live="polite">
           <p className="panel-label">{mode === 'room' ? 'SALA ACTIVA' : 'ESTACIÓN SELECCIONADA'}</p>
           <h2>{mode === 'room' ? `Sala: ${selectedStation.name}` : selectedStation.name}</h2>
@@ -111,7 +111,7 @@ export default function App() {
       </section>
 
       <section className="accessibility-note" aria-label="Controles de la escena">
-        <strong>Controles:</strong> usa W, A, S, D o flechas para mover el explorador; las estructuras y el borde de la plaza bloquean el paso. Haz clic en un portal para entrar a su sala.
+        <strong>Controles:</strong> usa W, A, S, D o flechas para mover a Lumi y acercarte a un portal; entrarás automáticamente. En cada sala puedes realizar el desafío opcional o usar el portal de regreso para continuar explorando.
       </section>
 
       <section className="explorer-archive" aria-labelledby="archive-title">

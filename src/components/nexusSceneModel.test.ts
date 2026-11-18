@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { stations } from '../data/stations'
-import { portalPositions } from './nexusSceneModel'
+import { portalAtPosition, portalPositions } from './nexusSceneModel'
 import { vortexPulse } from './NexusPortal'
 
 describe('portalPositions', () => {
@@ -15,5 +15,10 @@ describe('portalPositions', () => {
   it('pulses a portal vortex above its resting scale', () => {
     expect(vortexPulse(0)).toBe(1)
     expect(vortexPulse(Math.PI / 2)).toBeGreaterThan(1)
+  })
+
+  it('identifies the portal when the explorer reaches its entrance', () => {
+    expect(portalAtPosition([-4.2, 0, -0.4], stations)).toBe('neon')
+    expect(portalAtPosition([0, 0, 4.8], stations)).toBeUndefined()
   })
 })

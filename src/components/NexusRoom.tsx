@@ -8,6 +8,7 @@ import { movementFromKeys } from './roomMovement'
 
 type NexusRoomProps = {
   station: Station
+  onReturn: () => void
 }
 
 function RoomNavigator() {
@@ -37,7 +38,7 @@ function RoomNavigator() {
   return null
 }
 
-function RoomArchitecture({ station }: NexusRoomProps) {
+function RoomArchitecture({ station }: Pick<NexusRoomProps, 'station'>) {
   const orbit = useRef<Group>(null)
 
   useFrame(({ clock }) => {
@@ -61,7 +62,7 @@ function RoomArchitecture({ station }: NexusRoomProps) {
   )
 }
 
-export function NexusRoom({ station }: NexusRoomProps) {
+export function NexusRoom({ station, onReturn }: NexusRoomProps) {
   return (
     <group>
       <RoomNavigator />
@@ -87,6 +88,18 @@ export function NexusRoom({ station }: NexusRoomProps) {
         </mesh>
       </Float>
       <RoomArchitecture station={station} />
+      <group position={[0, -0.1, -5.2]} onClick={(event) => { event.stopPropagation(); onReturn() }}>
+        <mesh>
+          <torusGeometry args={[0.9, 0.13, 16, 72]} />
+          <meshStandardMaterial color="#8defff" emissive="#3d8cff" emissiveIntensity={2.8} metalness={0.9} roughness={0.12} />
+        </mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[0.82, 64]} />
+          <meshBasicMaterial color="#304fff" transparent opacity={0.34} />
+        </mesh>
+        <pointLight color="#65dcff" intensity={11} distance={5} />
+        <Text position={[0, 1.25, 0]} fontSize={0.18} color="#c8f8ff" anchorX="center">PORTAL DE REGRESO</Text>
+      </group>
       <Text position={[0, 3.35, 0]} fontSize={0.44} color="#f7f2ff" anchorX="center">
         {`SALA · ${station.name.toUpperCase()}`}
       </Text>

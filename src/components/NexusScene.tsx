@@ -6,6 +6,8 @@ import { NexusRoom } from './NexusRoom'
 import { NexusExplorer } from './NexusExplorer'
 import { NexusEnergyCore } from './NexusEnergyCore'
 import type { ExperienceMode } from './nexusNavigation'
+import { portalAtPosition } from './nexusSceneModel'
+import { useRef } from 'react'
 
 type NexusSceneProps = {
   onSelect: (id: Station['id']) => void
@@ -13,6 +15,7 @@ type NexusSceneProps = {
   station?: Station
   activeCoreIds?: readonly Station['id'][]
   onActivateCore?: (id: Station['id']) => void
+  onReturnToNexus?: () => void
 }
 
 const corePositions: Record<Station['id'], [number, number, number]> = {
@@ -29,6 +32,18 @@ type NexusPlazaProps = {
 
 function NexusPlaza({ activeCoreIds, onActivateCore, onSelect }: NexusPlazaProps) {
   const stabilized = activeCoreIds.length === stations.length
+  const enteredPortal = useRef<Station['id'] | null>(null)
+
+  const handleExplorerMove = (position: [number, number, number]) => {
+    const portalId = portalAtPosition(position, stations)
+    if (!portalId) {
+      enteredPortal.current = null
+      return
+    }
+    if (enteredPortal.current === portalId) return
+    enteredPortal.current = portalId
+    onSelect(portalId)
+  }
 
   return <>
     <color attach="background" args={['#08051a']} />
@@ -60,15 +75,15 @@ function NexusPlaza({ activeCoreIds, onActivateCore, onSelect }: NexusPlazaProps
     </group>
     {stations.map((item) => <NexusEnergyCore key={`core-${item.id}`} station={item} position={corePositions[item.id]} active={activeCoreIds.includes(item.id)} onActivate={onActivateCore} />)}
     {stations.map((item) => <NexusPortal key={item.id} station={item} unlocked onSelect={onSelect} />)}
-    <NexusExplorer />
+    <NexusExplorer onMove={handleExplorerMove} />
   </>
 }
 
-export function NexusScene({ onSelect, mode = 'nexus', station = stations[0], activeCoreIds = [], onActivateCore = () => {} }: NexusSceneProps) {
+export function NexusScene({ onSelect, mode = 'nexus', station = stations[0], activeCoreIds = [], onActivateCore = () => {}, onReturnToNexus = () => {} }: NexusSceneProps) {
   return (
     <div className="nexus-canvas" role="img" aria-label="Escena 3D del Nexus Central con tres portales explorables">
       <Canvas camera={{ position: [0, 3, 10], fov: 48 }} shadows dpr={[1, 1.75]}>
-        {mode === 'room' ? <NexusRoom station={station} /> : <NexusPlaza activeCoreIds={activeCoreIds} onActivateCore={onActivateCore} onSelect={onSelect} />}
+        {mode === 'room' ? <NexusRoom station={station} onReturn={onReturnToNexus} /> : <NexusPlaza activeCoreIds={activeCoreIds} onActivateCore={onActivateCore} onSelect={onSelect} />}
         <OrbitControls enablePan={false} minDistance={mode === 'room' ? 5 : 8} maxDistance={20} maxPolarAngle={Math.PI / 2.05} autoRotate={mode === 'room'} autoRotateSpeed={0.55} />
       </Canvas>
     </div>
