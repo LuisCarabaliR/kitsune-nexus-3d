@@ -3,10 +3,11 @@ import '@testing-library/jest-dom/vitest'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('./components/NexusScene', () => ({
-  NexusScene: ({ onSelect }: { onSelect: (id: string) => void }) => (
-    <button type="button" onClick={() => onSelect('mecha')}>
-      Escena del Nexus
-    </button>
+  NexusScene: ({ onSelect, onActivateCore }: { onSelect: (id: string) => void, onActivateCore?: (id: 'mecha') => void }) => (
+    <div>
+      <button type="button" onClick={() => onSelect('mecha')}>Escena del Nexus</button>
+      <button type="button" onClick={() => onActivateCore?.('mecha')}>Activar núcleo desde escena</button>
+    </div>
   ),
 }))
 
@@ -52,5 +53,12 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: /Activar núcleo de Ciudad Neón/i }))
     expect(screen.getByText(/Núcleos estabilizados: 1\/3/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Entrar a Ciudad Neón/i })).toBeEnabled()
+  })
+
+  it('passes mission state and the activation callback to the 3D scene', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Activar núcleo desde escena/i }))
+    expect(screen.getByText(/Núcleos estabilizados: 1\/3/i)).toBeInTheDocument()
   })
 })

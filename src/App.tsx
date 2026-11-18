@@ -67,7 +67,7 @@ export default function App() {
         <NexusScene onSelect={(id) => {
           setSelectedId(id)
           setMode('nexus')
-        }} mode={mode} station={selectedStation} />
+        }} mode={mode} station={selectedStation} activeCoreIds={mission.activeCoreIds} onActivateCore={(id) => setMission((currentMission) => activateCore(currentMission, id))} />
         <aside className="station-panel" aria-live="polite">
           <p className="panel-label">{mode === 'room' ? 'SALA ACTIVA' : 'ESTACIÓN SELECCIONADA'}</p>
           <h2>{mode === 'room' ? `Sala: ${selectedStation.name}` : selectedStation.name}</h2>

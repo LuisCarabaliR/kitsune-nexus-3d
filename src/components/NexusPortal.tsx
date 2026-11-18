@@ -6,10 +6,11 @@ import type { Station } from '../data/stations'
 
 type NexusPortalProps = {
   station: Station
+  unlocked: boolean
   onSelect: (id: Station['id']) => void
 }
 
-export function NexusPortal({ station, onSelect }: NexusPortalProps) {
+export function NexusPortal({ station, unlocked, onSelect }: NexusPortalProps) {
   const group = useRef<Group>(null)
   const [hovered, setHovered] = useState(false)
 
@@ -26,27 +27,27 @@ export function NexusPortal({ station, onSelect }: NexusPortalProps) {
         receiveShadow
         onClick={(event) => {
           event.stopPropagation()
-          onSelect(station.id)
+          if (unlocked) onSelect(station.id)
         }}
         onPointerEnter={() => setHovered(true)}
         onPointerLeave={() => setHovered(false)}
       >
         <torusGeometry args={[1.05, 0.15, 24, 96]} />
         <meshStandardMaterial
-          color={station.theme.primary}
-          emissive={station.theme.primary}
-          emissiveIntensity={hovered ? 3 : 1.7}
+          color={unlocked ? station.theme.primary : '#4a4562'}
+          emissive={unlocked ? station.theme.primary : '#1d1b2c'}
+          emissiveIntensity={unlocked ? hovered ? 3 : 1.7 : 0.45}
           metalness={0.74}
           roughness={0.18}
         />
       </mesh>
       <mesh rotation={[Math.PI / 2, 0, 0]}>
         <circleGeometry args={[0.9, 64]} />
-        <meshBasicMaterial color={station.theme.secondary} transparent opacity={hovered ? 0.62 : 0.32} />
+        <meshBasicMaterial color={unlocked ? station.theme.secondary : '#151322'} transparent opacity={unlocked ? hovered ? 0.62 : 0.32 : 0.24} />
       </mesh>
-      <pointLight color={station.theme.primary} intensity={hovered ? 24 : 12} distance={5} />
+      <pointLight color={unlocked ? station.theme.primary : '#333047'} intensity={unlocked ? hovered ? 24 : 12 : 2} distance={5} />
       <Text position={[0, -1.5, 0]} fontSize={0.24} color="#f5f1ff" anchorX="center">
-        {station.name}
+        {unlocked ? station.name : `${station.name} · BLOQUEADO`}
       </Text>
     </group>
   )
