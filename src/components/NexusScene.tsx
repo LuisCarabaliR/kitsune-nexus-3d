@@ -1,4 +1,4 @@
-import { OrbitControls, Sparkles, Stars } from '@react-three/drei'
+import { OrbitControls, Sparkles, Stars, Text } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { stations, type Station } from '../data/stations'
 import { NexusPortal } from './NexusPortal'
@@ -8,6 +8,7 @@ import { NexusEnergyCore } from './NexusEnergyCore'
 import type { ExperienceMode } from './nexusNavigation'
 import { portalAtPosition } from './nexusSceneModel'
 import { useRef } from 'react'
+import type { RoomMissionState } from './nexusExploration'
 
 type NexusSceneProps = {
   onSelect: (id: Station['id']) => void
@@ -16,6 +17,8 @@ type NexusSceneProps = {
   activeCoreIds?: readonly Station['id'][]
   onActivateCore?: (id: Station['id']) => void
   onReturnToNexus?: () => void
+  missionState?: RoomMissionState
+  onMissionAnswer?: (option: number) => void
 }
 
 const corePositions: Record<Station['id'], [number, number, number]> = {
@@ -47,25 +50,43 @@ function NexusPlaza({ activeCoreIds, onActivateCore, onSelect }: NexusPlazaProps
 
   return <>
     <color attach="background" args={['#08051a']} />
-    <fog attach="fog" args={['#08051a', 10, 28]} />
+    <fog attach="fog" args={['#08051a', 13, 36]} />
     <ambientLight intensity={0.45} />
     <directionalLight position={[5, 10, 4]} intensity={2.8} color="#b8d9ff" castShadow />
     <pointLight position={[0, 2, 1]} intensity={stabilized ? 34 : 20} color={stabilized ? '#73ffd5' : '#995cff'} distance={14} />
     <Stars radius={70} depth={36} count={1500} factor={2.5} saturation={0.6} fade speed={0.7} />
-    <Sparkles count={280} scale={[22, 9, 22]} size={2.3} speed={0.25} color={stabilized ? '#8dffe6' : '#7cecff'} />
+    <Sparkles count={420} scale={[30, 10, 30]} size={2.3} speed={0.25} color={stabilized ? '#8dffe6' : '#7cecff'} />
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.25, 0]} receiveShadow>
-      <circleGeometry args={[11, 112]} />
+      <circleGeometry args={[15, 144]} />
       <meshStandardMaterial color="#120b34" metalness={0.86} roughness={0.3} />
     </mesh>
-    {[3.1, 6.1, 9.1].map((radius, index) => <mesh key={radius} position={[0, -1.17 + index * 0.012, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+    {[3.1, 6.1, 9.1, 12.4].map((radius, index) => <mesh key={radius} position={[0, -1.17 + index * 0.012, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <torusGeometry args={[radius, index === 0 ? 0.08 : 0.035, 12, 112]} />
       <meshStandardMaterial color={index === 0 && stabilized ? '#73ffd5' : '#8458ff'} emissive={index === 0 && stabilized ? '#73ffd5' : '#5939cf'} emissiveIntensity={index === 0 ? 2.5 : 0.72} metalness={0.92} roughness={0.16} />
     </mesh>)}
     {[0, 1, 2, 3, 4, 5, 6, 7].map((index) => {
       const angle = (index / 8) * Math.PI * 2
-      return <group key={index} position={[Math.cos(angle) * 8.6, -0.15, Math.sin(angle) * 8.6]} rotation={[0, -angle, 0]}>
+      return <group key={index} position={[Math.cos(angle) * 11.7, -0.15, Math.sin(angle) * 11.7]} rotation={[0, -angle, 0]}>
         <mesh castShadow><boxGeometry args={[0.55, 2.8 + (index % 2) * 1.3, 0.55]} /><meshStandardMaterial color="#2d1e62" emissive="#3d2086" emissiveIntensity={0.75} metalness={0.85} roughness={0.2} /></mesh>
         <mesh position={[0, 1.9, 0]}><octahedronGeometry args={[0.28, 0]} /><meshStandardMaterial color="#7cecff" emissive="#41bcff" emissiveIntensity={1.8} /></mesh>
+      </group>
+    })}
+    {stations.map((station, index) => {
+      const [x, , z] = station.theme.position
+      const districtX = x * 2.1
+      const districtZ = z * 2.1
+      const angle = Math.atan2(districtX, districtZ)
+      const bridgeLength = Math.hypot(districtX, districtZ) - 2.2
+      return <group key={`district-${station.id}`}>
+        <mesh position={[districtX / 2, -1.18, districtZ / 2]} rotation={[0, -angle, 0]}>
+          <boxGeometry args={[1.55, 0.16, bridgeLength]} />
+          <meshStandardMaterial color="#2a1c5e" emissive={station.theme.primary} emissiveIntensity={0.5} metalness={0.85} roughness={0.22} />
+        </mesh>
+        <mesh position={[districtX, -1.18, districtZ]} rotation={[-Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[2.55, 64]} />
+          <meshStandardMaterial color="#17113e" emissive={station.theme.primary} emissiveIntensity={0.5 + index * 0.1} metalness={0.9} roughness={0.2} />
+        </mesh>
+        <Text position={[districtX, -0.55, districtZ + 1.95]} fontSize={0.17} color={station.theme.secondary} anchorX="center">{station.name.toUpperCase()} · DISTRITO</Text>
       </group>
     })}
     <group position={[0, 0.1, 0]}>
@@ -79,11 +100,11 @@ function NexusPlaza({ activeCoreIds, onActivateCore, onSelect }: NexusPlazaProps
   </>
 }
 
-export function NexusScene({ onSelect, mode = 'nexus', station = stations[0], activeCoreIds = [], onActivateCore = () => {}, onReturnToNexus = () => {} }: NexusSceneProps) {
+export function NexusScene({ onSelect, mode = 'nexus', station = stations[0], activeCoreIds = [], onActivateCore = () => {}, onReturnToNexus = () => {}, missionState, onMissionAnswer = () => {} }: NexusSceneProps) {
   return (
     <div className="nexus-canvas" role="img" aria-label="Escena 3D del Nexus Central con tres portales explorables">
       <Canvas camera={{ position: [0, 3, 10], fov: 48 }} shadows dpr={[1, 1.75]}>
-        {mode === 'room' ? <NexusRoom station={station} onReturn={onReturnToNexus} /> : <NexusPlaza activeCoreIds={activeCoreIds} onActivateCore={onActivateCore} onSelect={onSelect} />}
+        {mode === 'room' ? <NexusRoom station={station} onReturn={onReturnToNexus} missionState={missionState} onMissionAnswer={onMissionAnswer} /> : <NexusPlaza activeCoreIds={activeCoreIds} onActivateCore={onActivateCore} onSelect={onSelect} />}
         <OrbitControls enablePan={false} minDistance={mode === 'room' ? 5 : 8} maxDistance={20} maxPolarAngle={Math.PI / 2.05} autoRotate={mode === 'room'} autoRotateSpeed={0.55} />
       </Canvas>
     </div>

@@ -3,11 +3,12 @@ import '@testing-library/jest-dom/vitest'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('./components/NexusScene', () => ({
-  NexusScene: ({ onSelect, onActivateCore, onReturnToNexus }: { onSelect: (id: string) => void, onActivateCore?: (id: 'mecha') => void, onReturnToNexus?: () => void }) => (
+  NexusScene: ({ onSelect, onActivateCore, onReturnToNexus, onMissionAnswer }: { onSelect: (id: string) => void, onActivateCore?: (id: 'mecha') => void, onReturnToNexus?: () => void, onMissionAnswer?: (option: number) => void }) => (
     <div>
       <button type="button" onClick={() => onSelect('mecha')}>Escena del Nexus</button>
       <button type="button" onClick={() => onActivateCore?.('mecha')}>Activar núcleo desde escena</button>
       <button type="button" onClick={() => onReturnToNexus?.()}>Portal de regreso 3D</button>
+      <button type="button" onClick={() => onMissionAnswer?.(1)}>Puerta de respuesta errónea</button>
     </div>
   ),
 }))
@@ -80,5 +81,17 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: /Portal de regreso 3D/i }))
 
     expect(screen.getByRole('button', { name: /Entrar a Hangar Mecha/i })).toBeInTheDocument()
+  })
+
+  it('turns two wrong mission answers into a visible void failure', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Escena del Nexus/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Iniciar desafío opcional/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Puerta de respuesta errónea/i }))
+    expect(screen.getByText(/Fallas de estabilidad: 1\/2/i)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Puerta de respuesta errónea/i }))
+
+    expect(screen.getByText(/Misión perdida · Lumi cayó en la grieta dimensional/i)).toBeInTheDocument()
   })
 })

@@ -13,9 +13,9 @@ export function movementFromKeys(keys: Set<string>): MovementVector {
 
 export function moveExplorer(position: ExplorerPosition, direction: MovementVector, distance: number): ExplorerPosition {
   const next: ExplorerPosition = [
-    Math.max(-7.4, Math.min(7.4, position[0] + direction[0] * distance)),
+    Math.max(-11.5, Math.min(11.5, position[0] + direction[0] * distance)),
     0,
-    Math.max(-7.4, Math.min(7.4, position[2] + direction[2] * distance)),
+    Math.max(-11.5, Math.min(11.5, position[2] + direction[2] * distance)),
   ]
   const crossesPylon = plazaPylons.some(([x, z]) => Math.hypot(next[0] - x, next[2] - z) < 1.1)
 

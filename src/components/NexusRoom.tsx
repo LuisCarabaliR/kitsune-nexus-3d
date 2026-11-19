@@ -5,10 +5,13 @@ import { useThree } from '@react-three/fiber'
 import type { Group } from 'three'
 import type { Station } from '../data/stations'
 import { movementFromKeys } from './roomMovement'
+import type { RoomMissionState } from './nexusExploration'
 
 type NexusRoomProps = {
   station: Station
   onReturn: () => void
+  missionState?: RoomMissionState
+  onMissionAnswer: (option: number) => void
 }
 
 function RoomNavigator() {
@@ -62,7 +65,9 @@ function RoomArchitecture({ station }: Pick<NexusRoomProps, 'station'>) {
   )
 }
 
-export function NexusRoom({ station, onReturn }: NexusRoomProps) {
+export function NexusRoom({ station, onReturn, missionState, onMissionAnswer }: NexusRoomProps) {
+  const missionActive = missionState?.phase === 'active'
+  const inVoid = missionState?.phase === 'void'
   return (
     <group>
       <RoomNavigator />
@@ -88,6 +93,28 @@ export function NexusRoom({ station, onReturn }: NexusRoomProps) {
         </mesh>
       </Float>
       <RoomArchitecture station={station} />
+      {missionActive && <group position={[0, -0.32, 2.65]}>
+        {station.room.challenge.options.map((option, index) => {
+          const x = (index - 1) * 2.15
+          return <group key={option} position={[x, 0, 0]} onClick={(event) => { event.stopPropagation(); onMissionAnswer(index) }}>
+            <mesh castShadow><boxGeometry args={[1.35, 2.2, 0.32]} /><meshStandardMaterial color={station.theme.primary} emissive={station.theme.primary} emissiveIntensity={1.35} metalness={0.82} roughness={0.18} /></mesh>
+            <mesh position={[0, 0.1, 0.2]}><circleGeometry args={[0.35, 24]} /><meshBasicMaterial color={station.theme.secondary} /></mesh>
+            <Text position={[0, 1.33, 0.25]} maxWidth={1.35} fontSize={0.13} color="#ffffff" anchorX="center" textAlign="center">{option}</Text>
+          </group>
+        })}
+        <Text position={[0, 2.7, 0]} maxWidth={6.2} fontSize={0.23} color="#ffffff" anchorX="center" textAlign="center">{station.room.challenge.question}</Text>
+        <Text position={[0, -1.05, 0]} fontSize={0.16} color="#ffb1d9" anchorX="center">ELIGE UNA PUERTA · 2 FALLAS = GRIETA</Text>
+      </group>}
+      {missionState?.phase === 'success' && <group position={[0, 0.3, 2.65]}>
+        <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[1.1, 0.1, 16, 64]} /><meshStandardMaterial color="#66ffd8" emissive="#66ffd8" emissiveIntensity={3} /></mesh>
+        <Text position={[0, 1.45, 0]} fontSize={0.25} color="#b9ffea" anchorX="center">MISIÓN ESTABILIZADA</Text>
+      </group>}
+      {inVoid && <group position={[0, -0.95, 1.8]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh><torusGeometry args={[2.4, 0.22, 18, 88]} /><meshStandardMaterial color="#ff3b9d" emissive="#7d004c" emissiveIntensity={4} /></mesh>
+        <mesh><circleGeometry args={[2.25, 64]} /><meshBasicMaterial color="#06000f" transparent opacity={0.92} /></mesh>
+        <pointLight color="#ff2e9a" intensity={22} distance={9} />
+        <Text position={[0, -2.8, 0]} rotation={[Math.PI / 2, 0, 0]} fontSize={0.24} color="#ffd2eb" anchorX="center">GRIETA DIMENSIONAL · MISIÓN FALLIDA</Text>
+      </group>}
       <group position={[0, -0.1, -5.2]} onClick={(event) => { event.stopPropagation(); onReturn() }}>
         <mesh>
           <torusGeometry args={[0.9, 0.13, 16, 72]} />

@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { NexusScene } from './components/NexusScene'
 import { getStation, stations } from './data/stations'
 import { enterRoom, returnToNexus, type ExperienceMode } from './components/nexusNavigation'
 import { activateCore, createMission, isPortalUnlocked, missionProgress } from './components/nexusMission'
+import { answerMission, createExplorationProgress, createMissionState, explorationCount, exploreStation, startMission, type RoomMissionState } from './components/nexusExploration'
+import { clearExplorationProgress, loadExplorationProgress, saveExplorationProgress } from './components/nexusProgressStorage'
 import './styles.css'
 
 export default function App() {
@@ -11,16 +13,24 @@ export default function App() {
   const [mission, setMission] = useState(createMission)
   const [challengeOpen, setChallengeOpen] = useState(false)
   const [chosenOption, setChosenOption] = useState<number | null>(null)
+  const [roomMission, setRoomMission] = useState<RoomMissionState>(() => createMissionState(stations[0].id))
+  const [exploration, setExploration] = useState(() => typeof window === 'undefined' ? createExplorationProgress() : loadExplorationProgress(window.localStorage))
   const selectedStation = useMemo(() => getStation(selectedId) ?? stations[0], [selectedId])
   const progress = missionProgress(mission)
+  const exploredCount = explorationCount(exploration)
+  useEffect(() => {
+    saveExplorationProgress(window.localStorage, exploration)
+  }, [exploration])
   const leaveRoom = () => {
     setChallengeOpen(false)
     setChosenOption(null)
+    setRoomMission(createMissionState(selectedId))
     setMode(returnToNexus({ mode, stationId: selectedId }).mode)
   }
   const enterSelectedRoom = () => {
     setChallengeOpen(false)
     setChosenOption(null)
+    setRoomMission(createMissionState(selectedId))
     setMode(enterRoom(selectedId).mode)
   }
 
@@ -36,6 +46,7 @@ export default function App() {
           <div>
             <p className="panel-label">MISIÓN · ESTABILIZAR EL NEXUS</p>
             <p className="mission-progress">Núcleos estabilizados: {progress}/3</p>
+            <p className="mission-progress">Zonas exploradas: {exploredCount}/3</p>
             <p className="mission-copy">Activa los núcleos de energía para abrir cada portal y restaurar el equilibrio de la plaza.</p>
           </div>
           <div className="core-actions">
@@ -55,6 +66,8 @@ export default function App() {
             })}
           </div>
           {progress === stations.length && <p className="mission-complete" role="status">Nexus estabilizado: los tres portales están disponibles.</p>}
+          {exploredCount === stations.length && <p className="mission-complete" role="status">Mapa dominado: Lumi estabilizó los tres distritos del Nexus.</p>}
+          {exploredCount > 0 && <button className="room-action secondary" type="button" onClick={() => { clearExplorationProgress(window.localStorage); setExploration(createExplorationProgress()) }}>Reiniciar exploración</button>}
         </section>
         <nav aria-label="Estaciones del Nexus" className="station-nav">
           {stations.map((station) => (
@@ -67,6 +80,7 @@ export default function App() {
                 setMode('nexus')
                 setChallengeOpen(false)
                 setChosenOption(null)
+                setRoomMission(createMissionState(station.id))
               }}
             >
               <span>{station.name}</span>
@@ -81,8 +95,14 @@ export default function App() {
           setSelectedId(id)
           setChallengeOpen(false)
           setChosenOption(null)
+          setRoomMission(createMissionState(id))
           setMode(enterRoom(id).mode)
-        }} mode={mode} station={selectedStation} activeCoreIds={mission.activeCoreIds} onActivateCore={(id) => setMission((currentMission) => activateCore(currentMission, id))} onReturnToNexus={leaveRoom} />
+        }} mode={mode} station={selectedStation} activeCoreIds={mission.activeCoreIds} onActivateCore={(id) => setMission((currentMission) => activateCore(currentMission, id))} onReturnToNexus={leaveRoom} missionState={roomMission} onMissionAnswer={(option) => {
+          const next = answerMission(roomMission, selectedStation, option)
+          setChosenOption(option)
+          setRoomMission(next)
+          if (next.phase === 'success') setExploration((current) => exploreStation(current, selectedStation.id))
+        }} />
         <aside className="station-panel" aria-live="polite">
           <p className="panel-label">{mode === 'room' ? 'SALA ACTIVA' : 'ESTACIÓN SELECCIONADA'}</p>
           <h2>{mode === 'room' ? `Sala: ${selectedStation.name}` : selectedStation.name}</h2>
@@ -93,15 +113,19 @@ export default function App() {
           </div>
           {mode === 'room' ? <>
             <ul className="learning-points">{selectedStation.room.learningPoints.map((point) => <li key={point}>{point}</li>)}</ul>
-            {challengeOpen ? <section className="challenge-card" aria-label="Desafío opcional">
+            {roomMission.phase === 'void' ? <section className="challenge-card" aria-label="Misión perdida">
+              <p className="panel-label">FALLA DIMENSIONAL</p>
+              <p className="challenge-feedback">Misión perdida · Lumi cayó en la grieta dimensional. Regresa al Nexus y entra de nuevo para reintentar.</p>
+            </section> : challengeOpen ? <section className="challenge-card" aria-label="Desafío opcional">
               <p className="panel-label">DESAFÍO OPCIONAL</p>
               <p className="challenge-question">{selectedStation.room.challenge.question}</p>
+              <p className="mission-progress">Fallas de estabilidad: {roomMission.failures}/2</p>
               <div className="challenge-options">
-                {selectedStation.room.challenge.options.map((option, index) => <button key={option} type="button" onClick={() => setChosenOption(index)}>{option}</button>)}
+                {selectedStation.room.challenge.options.map((option, index) => <button key={option} type="button" onClick={() => { setChosenOption(index); setRoomMission((current) => answerMission(current, selectedStation, index)) }}>{option}</button>)}
               </div>
-              {chosenOption !== null && <p className={chosenOption === selectedStation.room.challenge.correctOption ? 'challenge-feedback correct' : 'challenge-feedback'}>{chosenOption === selectedStation.room.challenge.correctOption ? `Correcto. ${selectedStation.room.challenge.explanation}` : `Inténtalo de nuevo. ${selectedStation.room.challenge.explanation}`}</p>}
+              {roomMission.phase === 'success' ? <p className="challenge-feedback correct">Portal estabilizado. {selectedStation.room.challenge.explanation}</p> : chosenOption !== null && <p className="challenge-feedback">Falla de sincronía. Elige otra puerta o vuelve al Nexus.</p>}
               <button className="room-action secondary" type="button" onClick={() => { setChallengeOpen(false); setChosenOption(null) }}>Seguir explorando</button>
-            </section> : <button className="room-action" type="button" onClick={() => setChallengeOpen(true)}>Iniciar desafío opcional</button>}
+            </section> : <button className="room-action" type="button" onClick={() => { setChallengeOpen(true); setChosenOption(null); setRoomMission(startMission(createMissionState(selectedStation.id))) }}>Iniciar desafío opcional</button>}
             <button className="room-action secondary" type="button" onClick={leaveRoom}>Volver al Nexus</button>
           </> : <>
             <button className="room-action" type="button" onClick={enterSelectedRoom}>Entrar a {selectedStation.name}</button>
