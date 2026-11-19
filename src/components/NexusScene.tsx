@@ -7,7 +7,7 @@ import { NexusExplorer } from './NexusExplorer'
 import { NexusEnergyCore } from './NexusEnergyCore'
 import type { ExperienceMode } from './nexusNavigation'
 import { portalAtPosition } from './nexusSceneModel'
-import { useRef } from 'react'
+import { Suspense, useRef } from 'react'
 import type { RoomMissionState } from './nexusExploration'
 
 type NexusSceneProps = {
@@ -96,7 +96,7 @@ function NexusPlaza({ activeCoreIds, onActivateCore, onSelect }: NexusPlazaProps
     </group>
     {stations.map((item) => <NexusEnergyCore key={`core-${item.id}`} station={item} position={corePositions[item.id]} active={activeCoreIds.includes(item.id)} onActivate={onActivateCore} />)}
     {stations.map((item) => <NexusPortal key={item.id} station={item} unlocked onSelect={onSelect} />)}
-    <NexusExplorer onMove={handleExplorerMove} />
+    <Suspense fallback={null}><NexusExplorer onMove={handleExplorerMove} /></Suspense>
   </>
 }
 
@@ -104,8 +104,10 @@ export function NexusScene({ onSelect, mode = 'nexus', station = stations[0], ac
   return (
     <div className="nexus-canvas" role="img" aria-label="Escena 3D del Nexus Central con tres portales explorables">
       <Canvas camera={{ position: [0, 3, 10], fov: 48 }} shadows dpr={[1, 1.75]}>
-        {mode === 'room' ? <NexusRoom station={station} onReturn={onReturnToNexus} missionState={missionState} onMissionAnswer={onMissionAnswer} /> : <NexusPlaza activeCoreIds={activeCoreIds} onActivateCore={onActivateCore} onSelect={onSelect} />}
-        <OrbitControls enablePan={false} minDistance={mode === 'room' ? 5 : 8} maxDistance={20} maxPolarAngle={Math.PI / 2.05} autoRotate={mode === 'room'} autoRotateSpeed={0.55} />
+        <Suspense fallback={null}>
+          {mode === 'room' ? <NexusRoom station={station} onReturn={onReturnToNexus} missionState={missionState} onMissionAnswer={onMissionAnswer} /> : <NexusPlaza activeCoreIds={activeCoreIds} onActivateCore={onActivateCore} onSelect={onSelect} />}
+        </Suspense>
+        <OrbitControls enabled={mode === 'nexus'} enablePan={false} minDistance={8} maxDistance={20} maxPolarAngle={Math.PI / 2.05} />
       </Canvas>
     </div>
   )

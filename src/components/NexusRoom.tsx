@@ -2,9 +2,10 @@ import { Float, Sparkles, Text } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
 import { useThree } from '@react-three/fiber'
-import type { Group } from 'three'
+import { Vector3, type Group } from 'three'
 import type { Station } from '../data/stations'
-import { movementFromKeys } from './roomMovement'
+import { VrmLumi } from './NexusExplorer'
+import { advanceJump, movementFromKeys } from './roomMovement'
 import type { RoomMissionState } from './nexusExploration'
 
 type NexusRoomProps = {
@@ -16,12 +17,25 @@ type NexusRoomProps = {
 
 function RoomNavigator() {
   const pressedKeys = useRef(new Set<string>())
+  const moving = useRef(false)
+  const jumpQueued = useRef(false)
+  const jump = useRef({ height: 0, velocity: 0 })
+  const explorer = useRef<Group>(null)
   const { camera } = useThree()
 
   useEffect(() => {
-    camera.position.set(0, 1.8, 9)
-    const onKeyDown = (event: KeyboardEvent) => pressedKeys.current.add(event.code)
-    const onKeyUp = (event: KeyboardEvent) => pressedKeys.current.delete(event.code)
+    camera.position.set(0, 2.5, 9)
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.code === 'Space') {
+        event.preventDefault()
+        if (!event.repeat) jumpQueued.current = true
+      }
+      pressedKeys.current.add(event.code)
+    }
+    const onKeyUp = (event: KeyboardEvent) => {
+      if (event.code === 'Space') event.preventDefault()
+      pressedKeys.current.delete(event.code)
+    }
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
     return () => {
@@ -31,14 +45,30 @@ function RoomNavigator() {
   }, [camera])
 
   useFrame((_, delta) => {
+    if (!explorer.current) return
     const [x, , z] = movementFromKeys(pressedKeys.current)
-    if (!x && !z) return
-    const speed = 2.6 * delta
-    camera.position.x = Math.max(-6.8, Math.min(6.8, camera.position.x + x * speed))
-    camera.position.z = Math.max(-6.8, Math.min(10, camera.position.z + z * speed))
+    moving.current = Boolean(x || z)
+    jump.current = advanceJump(jump.current, jumpQueued.current, delta)
+    jumpQueued.current = false
+    explorer.current.position.y = -0.7 + jump.current.height
+    if (moving.current) {
+      const speed = 2.55 * delta
+      explorer.current.position.x = Math.max(-6.1, Math.min(6.1, explorer.current.position.x + x * speed))
+      explorer.current.position.z = Math.max(-5.6, Math.min(6.5, explorer.current.position.z + z * speed))
+      explorer.current.rotation.y = Math.atan2(x, z)
+    }
+    const focus = explorer.current.position.clone().add(new Vector3(0, 0.65, 0))
+    const desiredCamera = explorer.current.position.clone().add(new Vector3(0, 2.3, 5.6))
+    camera.position.lerp(desiredCamera, Math.min(1, delta * 4.5))
+    camera.lookAt(focus)
   })
 
-  return null
+  return <group ref={explorer} position={[0, -0.7, 4.4]}>
+    <group position={[0, 0.55, 0]}>
+      <VrmLumi moving={moving} />
+      <mesh position={[0, -1.48, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.58, 0.67, 40]} /><meshBasicMaterial color="#b486ff" transparent opacity={0.78} /></mesh>
+    </group>
+  </group>
 }
 
 function RoomArchitecture({ station }: Pick<NexusRoomProps, 'station'>) {
@@ -63,6 +93,63 @@ function RoomArchitecture({ station }: Pick<NexusRoomProps, 'station'>) {
       })}
     </group>
   )
+}
+
+function StationLandscape({ station }: Pick<NexusRoomProps, 'station'>) {
+  if (station.id === 'neon') {
+    return <group>
+      {[-1, 1].map((side) => <group key={side} position={[side * 5.4, 0.15, -1.4]}>
+        {[0, 1, 2].map((index) => <group key={index} position={[0, index * 1.55, index % 2 ? -0.5 : 0.3]}>
+          <mesh><boxGeometry args={[1.7, 1.35, 1.3]} /><meshStandardMaterial color="#21104d" emissive="#f725d0" emissiveIntensity={0.35 + index * 0.16} metalness={0.9} roughness={0.18} /></mesh>
+          {[-0.48, 0, 0.48].map((windowX) => <mesh key={windowX} position={[windowX, 0, 0.66]}><boxGeometry args={[0.22, 0.45, 0.025]} /><meshBasicMaterial color={index % 2 ? '#28d8ff' : '#ff5ce1'} /></mesh>)}
+        </group>)}
+      </group>)}
+      <mesh position={[0, -1.25, 2.4]}><boxGeometry args={[3.8, 0.08, 7.2]} /><meshStandardMaterial color="#0c1432" emissive="#28d8ff" emissiveIntensity={0.5} metalness={0.85} /></mesh>
+      {[-1, 0, 1].map((x) => <mesh key={x} position={[x * 0.85, -1.17, 3.3]}><boxGeometry args={[0.36, 0.02, 1.1]} /><meshBasicMaterial color="#f725d0" /></mesh>)}
+      {[-1, 1].map((side) => <group key={`lamp-${side}`} position={[side * 2.35, -0.35, 2.1]}>
+        <mesh><cylinderGeometry args={[0.055, 0.08, 1.8, 10]} /><meshStandardMaterial color="#2a2256" metalness={0.9} /></mesh>
+        <mesh position={[0, 0.95, 0]}><sphereGeometry args={[0.18, 16, 12]} /><meshBasicMaterial color="#28d8ff" /></mesh>
+        <pointLight position={[0, 0.95, 0]} color="#28d8ff" intensity={2.8} distance={3.5} />
+      </group>)}
+      <Float speed={1.6} floatIntensity={0.35}><group position={[0, 2.7, -2.9]}>
+        <mesh><boxGeometry args={[3.1, 0.7, 0.08]} /><meshBasicMaterial color="#281560" transparent opacity={0.82} /></mesh>
+        <Text position={[0, 0, 0.08]} fontSize={0.24} color="#74f4ff" anchorX="center">NEXUS // NEON DISTRICT</Text>
+      </group></Float>
+    </group>
+  }
+  if (station.id === 'wind') {
+    return <group>
+      {[[-4.8, 1.8, -1], [4.8, 2.5, -1], [-3.5, 3.8, 2], [3.4, 4.4, 1.6]].map(([x, y, z], index) => <Float key={index} speed={0.8 + index * 0.12} floatIntensity={0.75} rotationIntensity={0.15}>
+        <mesh position={[x, y, z]}><dodecahedronGeometry args={[0.75 + index * 0.1, 0]} /><meshStandardMaterial color="#8c5cff" emissive="#66ffd8" emissiveIntensity={1.35} metalness={0.68} roughness={0.22} /></mesh>
+      </Float>)}
+      {[0, 1, 2].map((index) => <mesh key={index} position={[0, 0.5 + index * 0.7, -2.4]} rotation={[Math.PI / 2.8, index, 0]}><torusGeometry args={[2.25 + index * 0.5, 0.055, 12, 72]} /><meshBasicMaterial color="#66ffd8" transparent opacity={0.68} /></mesh>)}
+      {[-1, 1].map((side) => <Float key={`isle-${side}`} speed={0.7} floatIntensity={0.36} rotationIntensity={0.08}>
+        <group position={[side * 5.2, 0.2, 1.7]}>
+          <mesh rotation={[0, Math.PI / 4, 0]}><cylinderGeometry args={[1.45, 0.75, 0.45, 6]} /><meshStandardMaterial color="#233a61" emissive="#384a83" emissiveIntensity={0.38} metalness={0.7} roughness={0.3} /></mesh>
+          <mesh position={[0, 0.65, 0]}><coneGeometry args={[0.32, 1.5, 5]} /><meshStandardMaterial color="#9d8cff" emissive="#66ffd8" emissiveIntensity={0.85} /></mesh>
+          <mesh position={[0, 1.55, 0]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.8, 0.04, 10, 48]} /><meshBasicMaterial color="#a9ffe9" /></mesh>
+        </group>
+      </Float>)}
+    </group>
+  }
+  return <group>
+    {[-1, 1].map((side) => <group key={side} position={[side * 4.9, -0.2, -1.5]} rotation={[0, 0, side * 0.18]}>
+      <mesh><boxGeometry args={[1.15, 4.5, 1.15]} /><meshStandardMaterial color="#432a32" emissive="#ff8a3d" emissiveIntensity={0.85} metalness={0.95} roughness={0.24} /></mesh>
+      <mesh position={[0, 2.45, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.28, 0.28, 3.4, 12]} /><meshStandardMaterial color="#ffe066" emissive="#ffe066" emissiveIntensity={1.25} metalness={0.9} roughness={0.18} /></mesh>
+    </group>)}
+    <mesh position={[0, -0.8, -3.5]}><boxGeometry args={[5.6, 0.8, 1.2]} /><meshStandardMaterial color="#242438" metalness={0.95} roughness={0.23} /></mesh>
+    {[0, 1, 2, 3].map((index) => <mesh key={index} position={[-2.4 + index * 1.6, -0.22, -2.85]}><boxGeometry args={[0.95, 0.48, 0.14]} /><meshStandardMaterial color="#ff8a3d" emissive="#ff8a3d" emissiveIntensity={1.4} /></mesh>)}
+    {[-1, 1].map((side) => <group key={`drone-${side}`} position={[side * 3.3, 2.3, 2.1]} rotation={[0, side * 0.5, 0]}>
+      <mesh><sphereGeometry args={[0.52, 18, 14]} /><meshStandardMaterial color="#344158" emissive="#ff8a3d" emissiveIntensity={0.52} metalness={0.96} roughness={0.18} /></mesh>
+      <mesh position={[0, 0, 0.48]}><circleGeometry args={[0.16, 20]} /><meshBasicMaterial color="#ffe066" /></mesh>
+      <mesh position={[0, 0.72, 0]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.58, 0.045, 8, 36]} /><meshBasicMaterial color="#ffb15a" /></mesh>
+    </group>)}
+    <group position={[0, 1.35, -4.1]}>
+      <mesh><boxGeometry args={[3.2, 1.25, 0.18]} /><meshStandardMaterial color="#172033" emissive="#202c43" emissiveIntensity={0.5} metalness={0.94} /></mesh>
+      <Text position={[0, 0.22, 0.11]} fontSize={0.22} color="#ffe066" anchorX="center">HANGAR // MATERIAL LAB</Text>
+      <Text position={[0, -0.22, 0.11]} fontSize={0.12} color="#ff9a4d" anchorX="center">METALNESS · ROUGHNESS · ESCALA</Text>
+    </group>
+  </group>
 }
 
 export function NexusRoom({ station, onReturn, missionState, onMissionAnswer }: NexusRoomProps) {
@@ -93,6 +180,7 @@ export function NexusRoom({ station, onReturn, missionState, onMissionAnswer }: 
         </mesh>
       </Float>
       <RoomArchitecture station={station} />
+      <StationLandscape station={station} />
       {missionActive && <group position={[0, -0.32, 2.65]}>
         {station.room.challenge.options.map((option, index) => {
           const x = (index - 1) * 2.15

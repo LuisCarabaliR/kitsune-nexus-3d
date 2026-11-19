@@ -9,6 +9,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@pixiv/three-vrm": "^3.5.5",
     "@react-three/drei": "^10.7.6",
     "@react-three/fiber": "^9.4.1",
     "@types/three": "^0.180.0",

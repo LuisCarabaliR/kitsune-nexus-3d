@@ -1,17 +1,51 @@
-import { Float, Text, useTexture } from '@react-three/drei'
-import { useFrame } from '@react-three/fiber'
-import { useEffect, useRef } from 'react'
+import { Text } from '@react-three/drei'
+import { useFrame, useLoader } from '@react-three/fiber'
+import { useEffect, useRef, type MutableRefObject } from 'react'
 import type { Group } from 'three'
-import { advanceJump, moveExplorer, movementFromKeys } from './roomMovement'
-import lumiExplorer from '../assets/lumi-explorer-v1.png'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { VRMLoaderPlugin, VRMUtils, type VRM } from '@pixiv/three-vrm'
+import { advanceJump, explorerWalkSwing, moveExplorer, movementFromKeys } from './roomMovement'
 
 type NexusExplorerProps = {
   onMove?: (position: [number, number, number]) => void
 }
 
+const avatarUrl = `${import.meta.env.BASE_URL}assets/lumi-avatar.vrm`
+
+export function VrmLumi({ moving }: { moving: MutableRefObject<boolean> }) {
+  const gltf = useLoader(GLTFLoader, avatarUrl, (loader) => loader.register((parser) => new VRMLoaderPlugin(parser)))
+  const vrm = gltf.userData.vrm as VRM | undefined
+
+  useEffect(() => {
+    if (vrm) VRMUtils.rotateVRM0(vrm)
+  }, [vrm])
+
+  useFrame(({ clock }, delta) => {
+    if (!vrm) return
+    vrm.update(delta)
+    const swing = explorerWalkSwing(clock.elapsedTime, moving.current)
+    const leftArm = vrm.humanoid?.getNormalizedBoneNode('leftUpperArm')
+    const rightArm = vrm.humanoid?.getNormalizedBoneNode('rightUpperArm')
+    const leftForeArm = vrm.humanoid?.getNormalizedBoneNode('leftLowerArm')
+    const rightForeArm = vrm.humanoid?.getNormalizedBoneNode('rightLowerArm')
+    const leftLeg = vrm.humanoid?.getNormalizedBoneNode('leftUpperLeg')
+    const rightLeg = vrm.humanoid?.getNormalizedBoneNode('rightUpperLeg')
+    if (leftArm) { leftArm.rotation.z = 1.05; leftArm.rotation.x = swing * 0.42 }
+    if (rightArm) { rightArm.rotation.z = -1.05; rightArm.rotation.x = -swing * 0.42 }
+    if (leftForeArm) leftForeArm.rotation.z = 0.14
+    if (rightForeArm) rightForeArm.rotation.z = -0.14
+    if (leftLeg) leftLeg.rotation.x = -swing * 0.36
+    if (rightLeg) rightLeg.rotation.x = swing * 0.36
+    vrm.expressionManager?.setValue('blink', Math.max(0, Math.sin(clock.elapsedTime * 2.1) - 0.94) * 16)
+  })
+
+  if (!vrm) return null
+  return <primitive object={vrm.scene} position={[0, -1.38, 0]} rotation={[0, Math.PI, 0]} scale={1.28} />
+}
+
 export function NexusExplorer({ onMove }: NexusExplorerProps) {
   const explorer = useRef<Group>(null)
-  const avatarTexture = useTexture(lumiExplorer)
+  const moving = useRef(false)
   const pressedKeys = useRef(new Set<string>())
   const jumpQueued = useRef(false)
   const jump = useRef({ height: 0, velocity: 0 })
@@ -42,6 +76,7 @@ export function NexusExplorer({ onMove }: NexusExplorerProps) {
     jumpQueued.current = false
     explorer.current.position.y = -0.7 + jump.current.height
     const [x, , z] = movementFromKeys(pressedKeys.current)
+    moving.current = Boolean(x || z)
     if (x || z) {
       const speed = 2.4 * delta
       const next = moveExplorer([explorer.current.position.x, 0, explorer.current.position.z], [x, 0, z], speed)
@@ -54,16 +89,12 @@ export function NexusExplorer({ onMove }: NexusExplorerProps) {
 
   return (
     <group ref={explorer} position={[0, -0.7, 4.8]} scale={1.08}>
-      <Float speed={1.45} rotationIntensity={0.06} floatIntensity={0.1}>
-        <group position={[0, 1.15, 0]}>
-          <sprite scale={[2.25, 3.4, 1]}>
-            <spriteMaterial map={avatarTexture} transparent depthWrite={false} />
-          </sprite>
-          <mesh position={[0, -1.48, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.58, 0.67, 40]} /><meshBasicMaterial color="#b486ff" transparent opacity={0.78} /></mesh>
-          <pointLight position={[0, 0.35, 0.25]} color="#7cecff" intensity={2.5} distance={3.5} />
-          <Text position={[0, 2.15, 0]} fontSize={0.13} color="#d8faff" anchorX="center">LUMI · EXPLORADORA</Text>
-        </group>
-      </Float>
+      <group position={[0, 0.55, 0]}>
+        <VrmLumi moving={moving} />
+        <mesh position={[0, -1.48, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.58, 0.67, 40]} /><meshBasicMaterial color="#b486ff" transparent opacity={0.78} /></mesh>
+        <pointLight position={[0, 0.35, 0.25]} color="#7cecff" intensity={2.5} distance={3.5} />
+        <Text position={[0, 1.9, 0]} fontSize={0.13} color="#d8faff" anchorX="center">LUMI · EXPLORADORA</Text>
+      </group>
     </group>
   )
 }

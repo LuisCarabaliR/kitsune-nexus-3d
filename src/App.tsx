@@ -135,7 +135,7 @@ export default function App() {
       </section>
 
       <section className="accessibility-note" aria-label="Controles de la escena">
-        <strong>Controles:</strong> usa W, A, S, D o flechas para mover a Lumi y acercarte a un portal; entrarás automáticamente. En cada sala puedes realizar el desafío opcional o usar el portal de regreso para continuar explorando.
+        <strong>Controles:</strong> usa W, A, S, D o flechas para mover a Lumi; con espacio salta sin desplazar la página. Acércate a un portal para entrar automáticamente. En cada sala exploras en tercera persona, puedes realizar el desafío opcional o usar el portal de regreso.
       </section>
 
       <section className="explorer-archive" aria-labelledby="archive-title">
