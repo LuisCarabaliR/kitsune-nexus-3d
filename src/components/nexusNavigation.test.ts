@@ -19,8 +19,11 @@ describe('guided room navigation', () => {
     expect(new Set(details.map((detail) => detail.mission)).size).toBe(3)
   })
 
-  it('maps keyboard input to a first-person movement vector', () => {
-    expect(movementFromKeys(new Set(['KeyW', 'KeyD']))).toEqual([1, 0, -1])
+  it('maps keyboard input to a normalized movement vector', () => {
+    const [x, y, z] = movementFromKeys(new Set(['KeyW', 'KeyD']))
+    expect(x).toBeCloseTo(Math.SQRT1_2)
+    expect(y).toBe(0)
+    expect(z).toBeCloseTo(-Math.SQRT1_2)
     expect(movementFromKeys(new Set(['ArrowDown']))).toEqual([0, 0, 1])
   })
 

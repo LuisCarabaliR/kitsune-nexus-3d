@@ -11,10 +11,27 @@ const roomObstacles: Record<RoomId, ReadonlyArray<readonly [number, number, numb
 }
 
 export function movementFromKeys(keys: Set<string>): MovementVector {
-  const x = Number(keys.has('KeyD') || keys.has('ArrowRight')) - Number(keys.has('KeyA') || keys.has('ArrowLeft'))
-  const z = Number(keys.has('KeyS') || keys.has('ArrowDown')) - Number(keys.has('KeyW') || keys.has('ArrowUp'))
+  const rawX = Number(keys.has('KeyD') || keys.has('ArrowRight')) - Number(keys.has('KeyA') || keys.has('ArrowLeft'))
+  const rawZ = Number(keys.has('KeyS') || keys.has('ArrowDown')) - Number(keys.has('KeyW') || keys.has('ArrowUp'))
+  const magnitude = Math.hypot(rawX, rawZ)
+  const x = magnitude > 1 ? rawX / magnitude : rawX
+  const z = magnitude > 1 ? rawZ / magnitude : rawZ
 
   return [x, 0, z]
+}
+
+export function smoothVelocity(current: MovementVector, direction: MovementVector, delta: number, maxSpeed = 2.8): MovementVector {
+  const response = 1 - Math.exp(-delta * (direction[0] || direction[2] ? 11 : 7))
+  return [
+    current[0] + (direction[0] * maxSpeed - current[0]) * response,
+    0,
+    current[2] + (direction[2] * maxSpeed - current[2]) * response,
+  ]
+}
+
+export function smoothTurn(current: number, target: number, delta: number): number {
+  const shortest = Math.atan2(Math.sin(target - current), Math.cos(target - current))
+  return current + shortest * Math.min(1, delta * 10)
 }
 
 export function moveExplorer(position: ExplorerPosition, direction: MovementVector, distance: number): ExplorerPosition {
@@ -30,9 +47,9 @@ export function moveExplorer(position: ExplorerPosition, direction: MovementVect
 
 export function moveRoomExplorer(room: RoomId, position: ExplorerPosition, direction: MovementVector, distance: number): ExplorerPosition {
   const next: ExplorerPosition = [
-    Math.max(-6.1, Math.min(6.1, position[0] + direction[0] * distance)),
+    Math.max(-9.2, Math.min(9.2, position[0] + direction[0] * distance)),
     0,
-    Math.max(-5.6, Math.min(6.5, position[2] + direction[2] * distance)),
+    Math.max(-8.5, Math.min(9.5, position[2] + direction[2] * distance)),
   ]
   const hitsStructure = roomObstacles[room].some(([x, z, radius]) => Math.hypot(next[0] - x, next[2] - z) < radius)
   return hitsStructure ? position : next

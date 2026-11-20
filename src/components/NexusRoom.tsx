@@ -1,11 +1,11 @@
-import { Float, Sparkles, Text } from '@react-three/drei'
+import { ContactShadows, Float, Sparkles, Text } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
 import { useThree } from '@react-three/fiber'
 import { Vector3, type Group } from 'three'
 import type { Station } from '../data/stations'
 import { VrmLumi } from './NexusExplorer'
-import { advanceJump, moveRoomExplorer, movementFromKeys } from './roomMovement'
+import { advanceJump, moveRoomExplorer, movementFromKeys, smoothTurn, smoothVelocity } from './roomMovement'
 import type { RoomMissionState } from './nexusExploration'
 
 type NexusRoomProps = {
@@ -20,6 +20,7 @@ function RoomNavigator({ station }: Pick<NexusRoomProps, 'station'>) {
   const moving = useRef(false)
   const jumpQueued = useRef(false)
   const jump = useRef({ height: 0, velocity: 0 })
+  const velocity = useRef<[number, number, number]>([0, 0, 0])
   const explorer = useRef<Group>(null)
   const { camera } = useThree()
 
@@ -46,17 +47,18 @@ function RoomNavigator({ station }: Pick<NexusRoomProps, 'station'>) {
 
   useFrame((_, delta) => {
     if (!explorer.current) return
-    const [x, , z] = movementFromKeys(pressedKeys.current)
-    moving.current = Boolean(x || z)
+    const direction = movementFromKeys(pressedKeys.current)
+    velocity.current = smoothVelocity(velocity.current, direction, delta, 2.85)
+    const [x, , z] = velocity.current
+    moving.current = Math.hypot(x, z) > 0.15
     jump.current = advanceJump(jump.current, jumpQueued.current, delta)
     jumpQueued.current = false
     explorer.current.position.y = -0.7 + jump.current.height
     if (moving.current) {
-      const speed = 2.55 * delta
-      const next = moveRoomExplorer(station.id, [explorer.current.position.x, 0, explorer.current.position.z], [x, 0, z], speed)
+      const next = moveRoomExplorer(station.id, [explorer.current.position.x, 0, explorer.current.position.z], velocity.current, delta)
       explorer.current.position.x = next[0]
       explorer.current.position.z = next[2]
-      explorer.current.rotation.y = Math.atan2(x, z)
+      if (direction[0] || direction[2]) explorer.current.rotation.y = smoothTurn(explorer.current.rotation.y, Math.atan2(direction[0], direction[2]), delta)
     }
     const focus = explorer.current.position.clone().add(new Vector3(0, 0.65, 0))
     const desiredCamera = explorer.current.position.clone().add(new Vector3(0, 2.3, 5.6))
@@ -85,8 +87,8 @@ function RoomArchitecture({ station }: Pick<NexusRoomProps, 'station'>) {
         const angle = (index / 6) * Math.PI * 2 + Math.PI / 6
         return (
           <Float key={index} speed={1.1 + index * 0.05} rotationIntensity={0.18} floatIntensity={0.32}>
-            <mesh position={[Math.cos(angle) * 6.65, 0.3 + (index % 2) * 0.55, Math.sin(angle) * 6.65]} rotation={[0, -angle, 0]}>
-              <boxGeometry args={[0.48, 2.35 + (index % 2) * 0.65, 0.48]} />
+            <mesh position={[Math.cos(angle) * 10.1, 0.3 + (index % 2) * 0.55, Math.sin(angle) * 10.1]} rotation={[0, -angle, 0]}>
+              <boxGeometry args={[0.38, 2.15 + (index % 2) * 0.55, 0.38]} />
               <meshStandardMaterial color={station.theme.primary} emissive={station.theme.primary} emissiveIntensity={1.6} metalness={0.85} roughness={0.2} />
             </mesh>
           </Float>
@@ -160,16 +162,22 @@ export function NexusRoom({ station, onReturn, missionState, onMissionAnswer }: 
     <group>
       <RoomNavigator station={station} />
       <color attach="background" args={['#070512']} />
-      <fog attach="fog" args={['#070512', 7, 19]} />
-      <ambientLight intensity={0.35} />
-      <directionalLight position={[4, 7, 5]} intensity={2.8} color="#dcd5ff" castShadow />
-      <pointLight position={[0, 2, 0]} color={station.theme.primary} intensity={28} distance={12} />
+      <fog attach="fog" args={['#070512', 9, 26]} />
+      <hemisphereLight args={['#bdc9ff', '#09020f', 1.05]} />
+      <ambientLight intensity={0.18} />
+      <directionalLight position={[4, 7, 5]} intensity={2.35} color="#dcd5ff" castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} shadow-camera-far={30} />
+      <pointLight position={[0, 2, 0]} color={station.theme.primary} intensity={20} distance={14} />
       <pointLight position={[-4, 1, -3]} color={station.theme.secondary} intensity={12} distance={9} />
       <Sparkles count={240} scale={[15, 8, 15]} size={2.1} speed={0.35} color={station.theme.secondary} />
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.45, 0]} receiveShadow>
-        <circleGeometry args={[8.5, 96]} />
-        <meshStandardMaterial color="#10092b" metalness={0.88} roughness={0.3} />
+        <circleGeometry args={[12, 112]} />
+        <meshPhysicalMaterial color="#10092b" metalness={0.78} roughness={0.27} clearcoat={0.26} clearcoatRoughness={0.28} />
       </mesh>
+      <ContactShadows position={[0, -1.4, 0]} opacity={0.48} scale={20} blur={2.2} far={8} color="#09020f" />
+      {[6.1, 8.7, 10.8].map((radius, index) => <mesh key={radius} rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.38 + index * 0.01, 0]}>
+        <torusGeometry args={[radius, 0.025, 10, 112]} />
+        <meshBasicMaterial color={station.theme.secondary} transparent opacity={0.18 + index * 0.08} />
+      </mesh>)}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.36, 0]}>
         <torusGeometry args={[3.1, 0.09, 16, 96]} />
         <meshStandardMaterial color={station.theme.secondary} emissive={station.theme.secondary} emissiveIntensity={2.4} metalness={0.95} roughness={0.16} />

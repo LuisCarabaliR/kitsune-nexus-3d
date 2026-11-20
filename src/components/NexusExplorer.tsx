@@ -4,7 +4,7 @@ import { useEffect, useRef, type MutableRefObject } from 'react'
 import type { Group } from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { VRMLoaderPlugin, VRMUtils, type VRM } from '@pixiv/three-vrm'
-import { advanceJump, explorerWalkSwing, moveExplorer, movementFromKeys } from './roomMovement'
+import { advanceJump, explorerWalkSwing, moveExplorer, movementFromKeys, smoothTurn, smoothVelocity } from './roomMovement'
 
 type NexusExplorerProps = {
   onMove?: (position: [number, number, number]) => void
@@ -37,12 +37,12 @@ export function VrmLumi({ moving }: { moving: MutableRefObject<boolean> }) {
     if (rightForeArm) rightForeArm.rotation.z = 0.14
     if (leftLeg) leftLeg.rotation.x = -swing * 0.36
     if (rightLeg) rightLeg.rotation.x = swing * 0.36
-    if (visual.current) visual.current.position.y = Math.sin(clock.elapsedTime * 2.1) * 0.018
+    if (visual.current) visual.current.position.y = -0.68 + Math.sin(clock.elapsedTime * 2.1) * 0.018
     vrm.expressionManager?.setValue('blink', Math.max(0, Math.sin(clock.elapsedTime * 2.1) - 0.94) * 16)
   })
 
   if (!vrm) return null
-  return <group ref={visual} position={[0, 0, 0]} rotation={[0, Math.PI, 0]} scale={1.42}>
+  return <group ref={visual} position={[0, -0.68, 0]} rotation={[0, Math.PI, 0]} scale={1.42}>
     <primitive object={vrm.scene} />
   </group>
 }
@@ -53,6 +53,7 @@ export function NexusExplorer({ onMove }: NexusExplorerProps) {
   const pressedKeys = useRef(new Set<string>())
   const jumpQueued = useRef(false)
   const jump = useRef({ height: 0, velocity: 0 })
+  const velocity = useRef<[number, number, number]>([0, 0, 0])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -79,14 +80,15 @@ export function NexusExplorer({ onMove }: NexusExplorerProps) {
     jump.current = advanceJump(jump.current, jumpQueued.current, delta)
     jumpQueued.current = false
     explorer.current.position.y = -0.7 + jump.current.height
-    const [x, , z] = movementFromKeys(pressedKeys.current)
-    moving.current = Boolean(x || z)
-    if (x || z) {
-      const speed = 2.4 * delta
-      const next = moveExplorer([explorer.current.position.x, 0, explorer.current.position.z], [x, 0, z], speed)
+    const direction = movementFromKeys(pressedKeys.current)
+    velocity.current = smoothVelocity(velocity.current, direction, delta, 2.7)
+    const [x, , z] = velocity.current
+    moving.current = Math.hypot(x, z) > 0.15
+    if (moving.current) {
+      const next = moveExplorer([explorer.current.position.x, 0, explorer.current.position.z], velocity.current, delta)
       explorer.current.position.x = next[0]
       explorer.current.position.z = next[2]
-      explorer.current.rotation.y = Math.atan2(x, z)
+      if (direction[0] || direction[2]) explorer.current.rotation.y = smoothTurn(explorer.current.rotation.y, Math.atan2(direction[0], direction[2]), delta)
       onMove?.(next)
     }
   })

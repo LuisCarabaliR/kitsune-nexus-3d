@@ -1,4 +1,4 @@
-import { OrbitControls, Sparkles, Stars, Text } from '@react-three/drei'
+import { ContactShadows, OrbitControls, Sparkles, Stars, Text } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { stations, type Station } from '../data/stations'
 import { NexusPortal } from './NexusPortal'
@@ -50,17 +50,19 @@ function NexusPlaza({ activeCoreIds, onActivateCore, onSelect }: NexusPlazaProps
 
   return <>
     <color attach="background" args={['#08051a']} />
-    <fog attach="fog" args={['#08051a', 13, 36]} />
-    <ambientLight intensity={0.45} />
-    <directionalLight position={[5, 10, 4]} intensity={2.8} color="#b8d9ff" castShadow />
+    <fog attach="fog" args={['#08051a', 16, 42]} />
+    <hemisphereLight args={['#b7c8ff', '#110722', 1.05]} />
+    <ambientLight intensity={0.22} />
+    <directionalLight position={[5, 10, 4]} intensity={2.3} color="#b8d9ff" castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} shadow-camera-far={36} />
     <pointLight position={[0, 2, 1]} intensity={stabilized ? 22 : 13} color={stabilized ? '#73ffd5' : '#995cff'} distance={14} />
     <Stars radius={70} depth={36} count={1500} factor={2.5} saturation={0.6} fade speed={0.7} />
     <Sparkles count={420} scale={[30, 10, 30]} size={2.3} speed={0.25} color={stabilized ? '#8dffe6' : '#7cecff'} />
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.25, 0]} receiveShadow>
-      <circleGeometry args={[15, 144]} />
-      <meshStandardMaterial color="#120b34" metalness={0.86} roughness={0.3} />
+      <circleGeometry args={[18, 144]} />
+      <meshPhysicalMaterial color="#120b34" metalness={0.78} roughness={0.24} clearcoat={0.32} clearcoatRoughness={0.3} />
     </mesh>
-    {[3.1, 6.1, 9.1, 12.4].map((radius, index) => <mesh key={radius} position={[0, -1.17 + index * 0.012, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+    <ContactShadows position={[0, -1.22, 0]} opacity={0.42} scale={30} blur={2.6} far={7} color="#120529" />
+    {[3.1, 6.1, 9.1, 12.4, 15.4].map((radius, index) => <mesh key={radius} position={[0, -1.17 + index * 0.012, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <torusGeometry args={[radius, index === 0 ? 0.08 : 0.035, 12, 112]} />
       <meshStandardMaterial color={index === 0 && stabilized ? '#73ffd5' : '#8458ff'} emissive={index === 0 && stabilized ? '#73ffd5' : '#5939cf'} emissiveIntensity={index === 0 ? 2.5 : 0.72} metalness={0.92} roughness={0.16} />
     </mesh>)}
