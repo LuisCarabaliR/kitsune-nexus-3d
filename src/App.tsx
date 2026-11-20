@@ -35,61 +35,7 @@ export default function App() {
   }
 
   return (
-    <main className="app-shell">
-      <section className="hero-copy" aria-labelledby="page-title">
-        <p className="eyebrow">NEXUS CENTRAL · EXPERIENCIA WEB 3D</p>
-        <h1 id="page-title">Kitsune Nexus 3D</h1>
-        <p className="intro">
-          Una experiencia interactiva de aprendizaje sobre composición, materiales y puesta en escena en mundos anime-futuristas.
-        </p>
-        <section className="mission-panel" aria-label="Misión del Nexus">
-          <div>
-            <p className="panel-label">MISIÓN · ESTABILIZAR EL NEXUS</p>
-            <p className="mission-progress">Núcleos estabilizados: {progress}/3</p>
-            <p className="mission-progress">Zonas exploradas: {exploredCount}/3</p>
-            <p className="mission-copy">Activa los núcleos de energía para abrir cada portal y restaurar el equilibrio de la plaza.</p>
-          </div>
-          <div className="core-actions">
-            {stations.map((station) => {
-              const active = isPortalUnlocked(mission, station.id)
-              return (
-                <button
-                  className={active ? 'core-action active' : 'core-action'}
-                  key={station.id}
-                  type="button"
-                  onClick={() => setMission((currentMission) => activateCore(currentMission, station.id))}
-                  disabled={active}
-                >
-                  {active ? `Núcleo de ${station.name} activo` : `Activar núcleo de ${station.name}`}
-                </button>
-              )
-            })}
-          </div>
-          {progress === stations.length && <p className="mission-complete" role="status">Nexus estabilizado: los tres portales están disponibles.</p>}
-          {exploredCount === stations.length && <p className="mission-complete" role="status">Mapa dominado: Lumi estabilizó los tres distritos del Nexus.</p>}
-          {exploredCount > 0 && <button className="room-action secondary" type="button" onClick={() => { clearExplorationProgress(window.localStorage); setExploration(createExplorationProgress()) }}>Reiniciar exploración</button>}
-        </section>
-        <nav aria-label="Estaciones del Nexus" className="station-nav">
-          {stations.map((station) => (
-            <button
-              className={station.id === selectedStation.id ? 'station-button selected' : 'station-button'}
-              key={station.id}
-              type="button"
-              onClick={() => {
-                setSelectedId(station.id)
-                setMode('nexus')
-                setChallengeOpen(false)
-                setChosenOption(null)
-                setRoomMission(createMissionState(station.id))
-              }}
-            >
-              <span>{station.name}</span>
-              <small>{station.subtitle}</small>
-            </button>
-          ))}
-        </nav>
-      </section>
-
+    <main className="game-shell">
       <section className="scene-layout" aria-label="Exploración 3D">
         <NexusScene onSelect={(id) => {
           setSelectedId(id)
@@ -103,6 +49,25 @@ export default function App() {
           setRoomMission(next)
           if (next.phase === 'success') setExploration((current) => exploreStation(current, selectedStation.id))
         }} />
+        <header className="game-hud" aria-labelledby="page-title">
+          <p className="eyebrow">NEXUS CENTRAL · EXPERIENCIA WEB 3D</p>
+          <h1 id="page-title">Kitsune Nexus 3D</h1>
+          <p className="hud-copy">Explora tres realidades, estabiliza sus núcleos y domina la composición 3D.</p>
+          <div className="hud-progress"><span>Núcleos estabilizados: {progress}/3</span><span>Zonas exploradas: {exploredCount}/3</span></div>
+        </header>
+        <section className="mission-panel game-mission" aria-label="Misión del Nexus">
+          <p className="panel-label">NÚCLEOS DE ENERGÍA</p>
+          <div className="core-actions">
+            {stations.map((station) => {
+              const active = isPortalUnlocked(mission, station.id)
+              return <button className={active ? 'core-action active' : 'core-action'} key={station.id} type="button" onClick={() => setMission((currentMission) => activateCore(currentMission, station.id))} disabled={active}>
+                {active ? `Núcleo de ${station.name} activo` : `Activar núcleo de ${station.name}`}
+              </button>
+            })}
+          </div>
+          {progress === stations.length && <p className="mission-complete" role="status">Nexus estabilizado.</p>}
+          {exploredCount > 0 && <button className="room-action secondary reset-action" type="button" onClick={() => { clearExplorationProgress(window.localStorage); setExploration(createExplorationProgress()) }}>Reiniciar</button>}
+        </section>
         <aside className="station-panel" aria-live="polite">
           <p className="panel-label">{mode === 'room' ? 'SALA ACTIVA' : 'ESTACIÓN SELECCIONADA'}</p>
           <h2>{mode === 'room' ? `Sala: ${selectedStation.name}` : selectedStation.name}</h2>
@@ -132,41 +97,38 @@ export default function App() {
             <p className="hint">Los núcleos son opcionales: entra a cualquier portal, completa el desafío si quieres y vuelve para explorar otro.</p>
           </>}
         </aside>
-      </section>
-
-      <section className="accessibility-note" aria-label="Controles de la escena">
-        <strong>Controles:</strong> usa W, A, S, D o flechas para mover a Lumi; con espacio salta sin desplazar la página. Acércate a un portal para entrar automáticamente. En cada sala exploras en tercera persona, puedes realizar el desafío opcional o usar el portal de regreso.
-      </section>
-
-      <section className="explorer-archive" aria-labelledby="archive-title">
-        <div className="archive-intro">
-          <p className="eyebrow">REGISTRO DEL NEXUS · PERFIL</p>
-          <h2 id="archive-title">Archivo del Explorador</h2>
-          <p className="archive-name">Luis Carabalí Rivera</p>
-          <p className="archive-role">Desarrollador de Software · Backend &amp; Fullstack</p>
-          <p>
-            Desarrollador de software en Cali, Colombia, con experiencia en aplicaciones web, APIs, bases de datos relacionales e
-            infraestructura cloud. Combino ese enfoque técnico con experimentación en experiencias Web 3D interactivas.
-          </p>
-          <a className="archive-link" href="https://github.com/LuisCarabaliR/kitsune-nexus-3d" target="_blank" rel="noreferrer">
-            Ver repositorio ↗
-          </a>
-        </div>
-        <div className="archive-grid">
-          <article>
-            <p className="panel-label">HABILIDADES ACTIVAS</p>
-            <div className="skill-tags"><span>JavaScript</span><span>TypeScript</span><span>SQL</span><span>React</span><span>Three.js</span><span>AWS</span><span>Docker</span></div>
-          </article>
-          <article>
-            <p className="panel-label">PROYECTO DESTACADO</p>
-            <h3>Kitsune Nexus 3D</h3>
-            <p>Hub interactivo con portales, salas temáticas, cámara 3D y aprendizaje visual.</p>
-          </article>
-          <article>
-            <p className="panel-label">TRAYECTORIA</p>
-            <p>Consultor IT independiente desde 2024. Formación en Ingeniería de Sistemas y Tecnólogo en Sistemas de Información.</p>
-          </article>
-        </div>
+        <nav aria-label="Estaciones del Nexus" className="station-nav game-nav">
+          {stations.map((station) => (
+            <button className={station.id === selectedStation.id ? 'station-button selected' : 'station-button'} key={station.id} type="button" onClick={() => {
+              setSelectedId(station.id)
+              setMode('nexus')
+              setChallengeOpen(false)
+              setChosenOption(null)
+              setRoomMission(createMissionState(station.id))
+            }}>
+              <span>{station.name}</span><small>{station.subtitle}</small>
+            </button>
+          ))}
+        </nav>
+        <details className="profile-dock">
+          <summary>Perfil del explorador</summary>
+          <section className="explorer-archive" aria-labelledby="archive-title">
+            <div className="archive-intro">
+              <p className="eyebrow">REGISTRO DEL NEXUS · PERFIL</p>
+              <h2 id="archive-title">Archivo del Explorador</h2>
+              <p className="archive-name">Luis Carabalí Rivera</p>
+              <p className="archive-role">Desarrollador de Software · Backend &amp; Fullstack</p>
+              <p>Desarrollador de software en Cali, Colombia, con experiencia en aplicaciones web, APIs, bases de datos relacionales e infraestructura cloud. Combino ese enfoque técnico con experimentación en experiencias Web 3D interactivas.</p>
+              <a className="archive-link" href="https://github.com/LuisCarabaliR/kitsune-nexus-3d" target="_blank" rel="noreferrer">Ver repositorio ↗</a>
+            </div>
+            <div className="archive-grid">
+              <article><p className="panel-label">HABILIDADES ACTIVAS</p><div className="skill-tags"><span>JavaScript</span><span>TypeScript</span><span>SQL</span><span>React</span><span>Three.js</span><span>AWS</span><span>Docker</span></div></article>
+              <article><p className="panel-label">PROYECTO DESTACADO</p><h3>Kitsune Nexus 3D</h3><p>Hub interactivo con portales, salas temáticas, cámara 3D y aprendizaje visual.</p></article>
+              <article><p className="panel-label">TRAYECTORIA</p><p>Consultor IT independiente desde 2024. Formación en Ingeniería de Sistemas y Tecnólogo en Sistemas de Información.</p></article>
+            </div>
+          </section>
+        </details>
+        <p className="accessibility-note" aria-label="Controles de la escena"><strong>Controles:</strong> W, A, S, D o flechas para moverte · Espacio para saltar · Acércate a un portal para entrar.</p>
       </section>
     </main>
   )

@@ -83,3 +83,43 @@ h1 { margin: .35rem 0; font-size: clamp(2.6rem, 7vw, 5.6rem); letter-spacing: -.
   .mission-panel { grid-template-columns: 1fr; }
   .explorer-archive { grid-template-columns: 1fr; margin-top: 2.4rem; }
 }
+
+/* Full-screen game presentation */
+.game-shell { min-height: 100svh; overflow: hidden; background: #070512; }
+.game-shell .scene-layout { width: 100vw; max-width: none; height: 100svh; min-height: 640px; margin: 0; border: 0; border-radius: 0; background: #070512; box-shadow: none; }
+.game-shell .nexus-canvas { height: 100svh; min-height: 640px; }
+.game-hud { position: absolute; z-index: 2; top: clamp(1rem, 3vw, 2.5rem); left: clamp(1rem, 3vw, 2.5rem); width: min(365px, calc(100vw - 2rem)); padding: 1rem 1.15rem; border: 1px solid rgba(124, 236, 255, .3); border-radius: 1rem; background: linear-gradient(135deg, rgba(9, 6, 29, .86), rgba(17, 30, 58, .68)); box-shadow: 0 18px 55px rgba(0, 0, 0, .36); backdrop-filter: blur(16px); }
+.game-hud h1 { margin: .15rem 0 .3rem; font-size: clamp(1.85rem, 3.6vw, 3.15rem); line-height: .98; }
+.hud-copy { margin: .35rem 0 .8rem; color: #c9c2df; font-size: .85rem; line-height: 1.45; }
+.hud-progress { display: flex; gap: .65rem; flex-wrap: wrap; color: #d7fbff; font-size: .7rem; font-weight: 850; letter-spacing: .09em; }
+.hud-progress span { padding: .38rem .5rem; border: 1px solid rgba(124, 236, 255, .28); border-radius: .5rem; background: rgba(4, 8, 25, .45); }
+.game-mission { position: absolute; z-index: 2; top: clamp(1rem, 3vw, 2.5rem); right: clamp(1rem, 3vw, 2.5rem); width: min(410px, calc(100vw - 2rem)); margin: 0; padding: .85rem 1rem; display: grid; grid-template-columns: 1fr; background: rgba(9, 6, 29, .78); backdrop-filter: blur(16px); }
+.game-mission .panel-label { margin: 0 0 .55rem; }
+.game-mission .core-actions { gap: .4rem; }
+.game-mission .core-action { padding: .46rem .58rem; font-size: .68rem; }
+.reset-action { margin-top: .55rem; padding: .42rem .65rem; font-size: .72rem; }
+.game-shell .station-panel { z-index: 3; bottom: clamp(4.8rem, 9vw, 6.5rem); right: clamp(1rem, 3vw, 2.5rem); }
+.game-nav { position: absolute; z-index: 3; left: 50%; bottom: clamp(1rem, 3vw, 2.2rem); transform: translateX(-50%); width: min(760px, calc(100vw - 2rem)); margin: 0; flex-wrap: nowrap; }
+.game-nav .station-button { flex: 1; min-width: 0; padding: .65rem .7rem; background: rgba(9, 6, 29, .82); backdrop-filter: blur(12px); }
+.profile-dock { position: absolute; z-index: 5; left: clamp(1rem, 3vw, 2.5rem); bottom: clamp(1rem, 3vw, 2.2rem); max-width: min(560px, calc(100vw - 2rem)); }
+.profile-dock summary { width: max-content; max-width: 100%; padding: .65rem .9rem; border: 1px solid rgba(124, 236, 255, .48); border-radius: .7rem; color: #dbfaff; background: rgba(9, 6, 29, .82); cursor: pointer; font-weight: 800; backdrop-filter: blur(12px); }
+.profile-dock[open] { bottom: clamp(1rem, 3vw, 2.2rem); }
+.profile-dock .explorer-archive { max-height: min(70svh, 560px); margin: .65rem 0 0; padding: 1rem; overflow: auto; border-radius: 1rem; background: rgba(10, 7, 30, .9); backdrop-filter: blur(18px); grid-template-columns: 1fr; }
+.profile-dock .archive-intro h2 { font-size: 2rem; }
+.profile-dock .archive-intro p { margin: .5rem 0; }
+.profile-dock .archive-grid { grid-template-columns: 1fr; }
+.game-shell .accessibility-note { position: absolute; z-index: 2; left: 50%; bottom: .3rem; transform: translateX(-50%); width: min(820px, calc(100vw - 2rem)); margin: 0; color: rgba(235, 243, 255, .75); font-size: .72rem; pointer-events: none; }
+
+@media (max-width: 760px) {
+  .game-shell .scene-layout, .game-shell .nexus-canvas { min-height: 700px; }
+  .game-hud { top: .7rem; left: .7rem; width: calc(100vw - 1.4rem); padding: .75rem .85rem; }
+  .game-hud .hud-copy { display: none; }
+  .game-mission { top: 8.2rem; right: .7rem; width: calc(100vw - 1.4rem); }
+  .game-shell .station-panel { right: .7rem; left: .7rem; bottom: 7.4rem; max-width: none; padding: .85rem; }
+  .game-shell .station-panel .learning-points { display: none; }
+  .game-nav { bottom: 1.5rem; gap: .35rem; }
+  .game-nav .station-button { padding: .45rem .3rem; font-size: .72rem; }
+  .game-nav .station-button small { display: none; }
+  .profile-dock { display: none; }
+  .game-shell .accessibility-note { display: none; }
+}
