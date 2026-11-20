@@ -5,7 +5,7 @@ import { useThree } from '@react-three/fiber'
 import { Vector3, type Group } from 'three'
 import type { Station } from '../data/stations'
 import { VrmLumi } from './NexusExplorer'
-import { advanceJump, movementFromKeys } from './roomMovement'
+import { advanceJump, moveRoomExplorer, movementFromKeys } from './roomMovement'
 import type { RoomMissionState } from './nexusExploration'
 
 type NexusRoomProps = {
@@ -15,7 +15,7 @@ type NexusRoomProps = {
   onMissionAnswer: (option: number) => void
 }
 
-function RoomNavigator() {
+function RoomNavigator({ station }: Pick<NexusRoomProps, 'station'>) {
   const pressedKeys = useRef(new Set<string>())
   const moving = useRef(false)
   const jumpQueued = useRef(false)
@@ -53,8 +53,9 @@ function RoomNavigator() {
     explorer.current.position.y = -0.7 + jump.current.height
     if (moving.current) {
       const speed = 2.55 * delta
-      explorer.current.position.x = Math.max(-6.1, Math.min(6.1, explorer.current.position.x + x * speed))
-      explorer.current.position.z = Math.max(-5.6, Math.min(6.5, explorer.current.position.z + z * speed))
+      const next = moveRoomExplorer(station.id, [explorer.current.position.x, 0, explorer.current.position.z], [x, 0, z], speed)
+      explorer.current.position.x = next[0]
+      explorer.current.position.z = next[2]
       explorer.current.rotation.y = Math.atan2(x, z)
     }
     const focus = explorer.current.position.clone().add(new Vector3(0, 0.65, 0))
@@ -157,7 +158,7 @@ export function NexusRoom({ station, onReturn, missionState, onMissionAnswer }: 
   const inVoid = missionState?.phase === 'void'
   return (
     <group>
-      <RoomNavigator />
+      <RoomNavigator station={station} />
       <color attach="background" args={['#070512']} />
       <fog attach="fog" args={['#070512', 7, 19]} />
       <ambientLight intensity={0.35} />
