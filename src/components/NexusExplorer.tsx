@@ -10,11 +10,12 @@ type NexusExplorerProps = {
   onMove?: (position: [number, number, number]) => void
 }
 
-const avatarUrl = `${import.meta.env.BASE_URL}assets/lumi-avatar.vrm`
+const avatarUrl = `${import.meta.env.BASE_URL}assets/lumi-hero.vrm`
 
 export function VrmLumi({ moving }: { moving: MutableRefObject<boolean> }) {
   const gltf = useLoader(GLTFLoader, avatarUrl, (loader) => loader.register((parser) => new VRMLoaderPlugin(parser)))
   const vrm = gltf.userData.vrm as VRM | undefined
+  const visual = useRef<Group>(null)
 
   useEffect(() => {
     if (vrm) VRMUtils.rotateVRM0(vrm)
@@ -30,17 +31,20 @@ export function VrmLumi({ moving }: { moving: MutableRefObject<boolean> }) {
     const rightForeArm = vrm.humanoid?.getNormalizedBoneNode('rightLowerArm')
     const leftLeg = vrm.humanoid?.getNormalizedBoneNode('leftUpperLeg')
     const rightLeg = vrm.humanoid?.getNormalizedBoneNode('rightUpperLeg')
-    if (leftArm) { leftArm.rotation.z = 1.05; leftArm.rotation.x = swing * 0.42 }
-    if (rightArm) { rightArm.rotation.z = -1.05; rightArm.rotation.x = -swing * 0.42 }
-    if (leftForeArm) leftForeArm.rotation.z = 0.14
-    if (rightForeArm) rightForeArm.rotation.z = -0.14
+    if (leftArm) { leftArm.rotation.z = -1.05; leftArm.rotation.x = swing * 0.42 }
+    if (rightArm) { rightArm.rotation.z = 1.05; rightArm.rotation.x = -swing * 0.42 }
+    if (leftForeArm) leftForeArm.rotation.z = -0.14
+    if (rightForeArm) rightForeArm.rotation.z = 0.14
     if (leftLeg) leftLeg.rotation.x = -swing * 0.36
     if (rightLeg) rightLeg.rotation.x = swing * 0.36
+    if (visual.current) visual.current.position.y = Math.sin(clock.elapsedTime * 2.1) * 0.018
     vrm.expressionManager?.setValue('blink', Math.max(0, Math.sin(clock.elapsedTime * 2.1) - 0.94) * 16)
   })
 
   if (!vrm) return null
-  return <primitive object={vrm.scene} position={[0, -1.38, 0]} rotation={[0, Math.PI, 0]} scale={1.28} />
+  return <group ref={visual} position={[0, 0, 0]} rotation={[0, Math.PI, 0]} scale={1.42}>
+    <primitive object={vrm.scene} />
+  </group>
 }
 
 export function NexusExplorer({ onMove }: NexusExplorerProps) {
@@ -92,7 +96,7 @@ export function NexusExplorer({ onMove }: NexusExplorerProps) {
       <group position={[0, 0.55, 0]}>
         <VrmLumi moving={moving} />
         <mesh position={[0, -1.48, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.58, 0.67, 40]} /><meshBasicMaterial color="#b486ff" transparent opacity={0.78} /></mesh>
-        <pointLight position={[0, 0.35, 0.25]} color="#7cecff" intensity={2.5} distance={3.5} />
+        <pointLight position={[0, 0.35, 0.25]} color="#7cecff" intensity={1.1} distance={3.5} />
         <Text position={[0, 1.9, 0]} fontSize={0.13} color="#d8faff" anchorX="center">LUMI · EXPLORADORA</Text>
       </group>
     </group>

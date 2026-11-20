@@ -82,11 +82,11 @@ function RoomArchitecture({ station }: Pick<NexusRoomProps, 'station'>) {
   return (
     <group ref={orbit}>
       {[0, 1, 2, 3, 4, 5].map((index) => {
-        const angle = (index / 6) * Math.PI * 2
+        const angle = (index / 6) * Math.PI * 2 + Math.PI / 6
         return (
           <Float key={index} speed={1.1 + index * 0.05} rotationIntensity={0.18} floatIntensity={0.32}>
-            <mesh position={[Math.cos(angle) * 4.2, 0.3 + (index % 2) * 0.55, Math.sin(angle) * 4.2]} rotation={[0, -angle, 0]}>
-              <boxGeometry args={[0.58, 2.8 + (index % 2) * 0.8, 0.58]} />
+            <mesh position={[Math.cos(angle) * 6.65, 0.3 + (index % 2) * 0.55, Math.sin(angle) * 6.65]} rotation={[0, -angle, 0]}>
+              <boxGeometry args={[0.48, 2.35 + (index % 2) * 0.65, 0.48]} />
               <meshStandardMaterial color={station.theme.primary} emissive={station.theme.primary} emissiveIntensity={1.6} metalness={0.85} roughness={0.2} />
             </mesh>
           </Float>

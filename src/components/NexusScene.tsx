@@ -53,7 +53,7 @@ function NexusPlaza({ activeCoreIds, onActivateCore, onSelect }: NexusPlazaProps
     <fog attach="fog" args={['#08051a', 13, 36]} />
     <ambientLight intensity={0.45} />
     <directionalLight position={[5, 10, 4]} intensity={2.8} color="#b8d9ff" castShadow />
-    <pointLight position={[0, 2, 1]} intensity={stabilized ? 34 : 20} color={stabilized ? '#73ffd5' : '#995cff'} distance={14} />
+    <pointLight position={[0, 2, 1]} intensity={stabilized ? 22 : 13} color={stabilized ? '#73ffd5' : '#995cff'} distance={14} />
     <Stars radius={70} depth={36} count={1500} factor={2.5} saturation={0.6} fade speed={0.7} />
     <Sparkles count={420} scale={[30, 10, 30]} size={2.3} speed={0.25} color={stabilized ? '#8dffe6' : '#7cecff'} />
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.25, 0]} receiveShadow>
