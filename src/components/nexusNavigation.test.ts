@@ -56,4 +56,10 @@ describe('guided room navigation', () => {
     expect(explorerWalkSwing(Math.PI / 8, false)).toBe(0)
     expect(explorerWalkSwing(Math.PI / 8, true)).not.toBe(0)
   })
+
+  it('keeps the stride subtle instead of using a robotic swing', () => {
+    const peakMoment = Math.PI / (2 * 5.2)
+
+    expect(Math.abs(explorerWalkSwing(peakMoment, true))).toBeLessThanOrEqual(0.2)
+  })
 })

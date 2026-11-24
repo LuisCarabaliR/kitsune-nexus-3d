@@ -43,7 +43,7 @@ export function VrmLumi({ moving, motion }: { moving: MutableRefObject<boolean>,
   })
 
   if (!vrm) return null
-  return <group ref={visual} position={[0, -0.68, 0]} rotation={[0, Math.PI, 0]} scale={1.42}>
+  return <group ref={visual} position={[0, -0.68, 0]} scale={1.42}>
     <primitive object={vrm.scene} />
   </group>
 }
