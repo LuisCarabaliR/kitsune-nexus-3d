@@ -18,4 +18,10 @@ describe('expanded Nexus movement', () => {
     expect(smoothTurn(0, Math.PI, 0.05)).toBeGreaterThan(0)
     expect(smoothTurn(0, Math.PI, 0.05)).toBeLessThan(Math.PI)
   })
+
+  it('brakes quickly after the explorer releases the movement key', () => {
+    const stopped = smoothVelocity([2.8, 0, 0], [0, 0, 0], 0.12)
+
+    expect(stopped[0]).toBeLessThan(0.5)
+  })
 })

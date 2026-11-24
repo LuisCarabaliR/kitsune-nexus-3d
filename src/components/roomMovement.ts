@@ -21,7 +21,8 @@ export function movementFromKeys(keys: Set<string>): MovementVector {
 }
 
 export function smoothVelocity(current: MovementVector, direction: MovementVector, delta: number, maxSpeed = 2.8): MovementVector {
-  const response = 1 - Math.exp(-delta * (direction[0] || direction[2] ? 11 : 7))
+  const moving = Boolean(direction[0] || direction[2])
+  const response = 1 - Math.exp(-delta * (moving ? 13 : 16))
   return [
     current[0] + (direction[0] * maxSpeed - current[0]) * response,
     0,
