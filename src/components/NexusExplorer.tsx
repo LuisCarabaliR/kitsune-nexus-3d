@@ -11,6 +11,7 @@ import { selectAvatarMotion, type AvatarMotion } from './avatarMotion'
 
 type NexusExplorerProps = {
   onMove?: (position: [number, number, number]) => void
+  initialPosition?: [number, number, number]
 }
 
 const avatarUrl = `${import.meta.env.BASE_URL}assets/lumi-hero.vrm`
@@ -78,7 +79,7 @@ export function VrmLumi({ moving, celebrating = false }: { moving: MutableRefObj
   </group>
 }
 
-export function NexusExplorer({ onMove }: NexusExplorerProps) {
+export function NexusExplorer({ onMove, initialPosition = [0, -0.7, 4.8] }: NexusExplorerProps) {
   const explorer = useRef<Group>(null)
   const moving = useRef(false)
   const pressedKeys = useRef(new Set<string>())
@@ -125,7 +126,7 @@ export function NexusExplorer({ onMove }: NexusExplorerProps) {
   })
 
   return (
-    <group ref={explorer} position={[0, -0.7, 4.8]} scale={1.08}>
+    <group ref={explorer} position={initialPosition} scale={1.08}>
       <group position={[0, 0.55, 0]}>
         <VrmLumi moving={moving} />
         <mesh position={[0, -1.48, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.58, 0.67, 40]} /><meshBasicMaterial color="#b486ff" transparent opacity={0.78} /></mesh>

@@ -3,7 +3,7 @@ import { moveExplorer, moveRoomExplorer, smoothTurn, smoothVelocity } from './ro
 
 describe('expanded Nexus movement', () => {
   it('allows Lumi to reach the outer districts while keeping her inside the map', () => {
-    expect(moveExplorer([10.9, 0, 0], [1, 0, 0], 2)).toEqual([11.5, 0, 0])
+    expect(moveExplorer([29, 0, 0], [1, 0, 0], 3)).toEqual([30, 0, 0])
   })
 
   it('keeps Lumi out of room structures while allowing a route around them', () => {

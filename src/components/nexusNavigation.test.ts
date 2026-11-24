@@ -42,7 +42,7 @@ describe('guided room navigation', () => {
   })
 
   it('stops the explorer before crossing a plaza pylon', () => {
-    expect(moveExplorer([0, 0, 4.8], [1, 0, 0], 4)).toEqual([0, 0, 4.8])
+    expect(moveExplorer([-27, 0, 7], [1, 0, 0], 4)).toEqual([-27, 0, 7])
   })
 
   it('launches the explorer upward when space queues a jump from the ground', () => {

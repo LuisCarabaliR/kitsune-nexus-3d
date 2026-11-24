@@ -3,7 +3,8 @@ export type ExplorerPosition = [number, number, number]
 export type JumpState = { height: number, velocity: number }
 export type RoomId = 'neon' | 'wind' | 'mecha'
 
-const plazaPylons: ReadonlyArray<readonly [number, number]> = [[4, 4.8], [-4, 2.2], [0, -4.2]]
+const plazaPylons: ReadonlyArray<readonly [number, number]> = [[-23, 7], [23, 7], [-23, -14], [23, -14]]
+const plazaLimit = 30
 const roomObstacles: Record<RoomId, ReadonlyArray<readonly [number, number, number]>> = {
   neon: [[0, 0, 1.55], [-5.4, -1.4, 1.25], [5.4, -1.4, 1.25]],
   wind: [[0, 0, 1.55], [-5.2, 1.7, 1.35], [5.2, 1.7, 1.35]],
@@ -37,9 +38,9 @@ export function smoothTurn(current: number, target: number, delta: number): numb
 
 export function moveExplorer(position: ExplorerPosition, direction: MovementVector, distance: number): ExplorerPosition {
   const next: ExplorerPosition = [
-    Math.max(-11.5, Math.min(11.5, position[0] + direction[0] * distance)),
+    Math.max(-plazaLimit, Math.min(plazaLimit, position[0] + direction[0] * distance)),
     0,
-    Math.max(-11.5, Math.min(11.5, position[2] + direction[2] * distance)),
+    Math.max(-plazaLimit, Math.min(plazaLimit, position[2] + direction[2] * distance)),
   ]
   const crossesPylon = plazaPylons.some(([x, z]) => Math.hypot(next[0] - x, next[2] - z) < 1.1)
 
