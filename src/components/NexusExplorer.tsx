@@ -4,7 +4,8 @@ import { useEffect, useRef, type MutableRefObject } from 'react'
 import type { Group } from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { VRMLoaderPlugin, VRMUtils, type VRM } from '@pixiv/three-vrm'
-import { advanceJump, explorerWalkSwing, moveExplorer, movementFromKeys, smoothTurn, smoothVelocity } from './roomMovement'
+import { advanceJump, moveExplorer, movementFromKeys, smoothTurn, smoothVelocity } from './roomMovement'
+import { needsVrm0Rotation } from './vrmOrientation'
 
 type NexusExplorerProps = {
   onMove?: (position: [number, number, number]) => void
@@ -18,27 +19,15 @@ export function VrmLumi({ moving, motion }: { moving: MutableRefObject<boolean>,
   const visual = useRef<Group>(null)
 
   useEffect(() => {
-    if (vrm) VRMUtils.rotateVRM0(vrm)
+    if (!vrm?.meta || !('metaVersion' in vrm.meta)) return
+    if (needsVrm0Rotation(vrm.meta.metaVersion)) VRMUtils.rotateVRM0(vrm)
   }, [vrm])
 
   useFrame(({ clock }, delta) => {
     if (!vrm) return
     vrm.update(delta)
     const intensity = motion?.current ?? (moving.current ? 1 : 0)
-    const swing = explorerWalkSwing(clock.elapsedTime, moving.current) * intensity
-    const leftArm = vrm.humanoid?.getNormalizedBoneNode('leftUpperArm')
-    const rightArm = vrm.humanoid?.getNormalizedBoneNode('rightUpperArm')
-    const leftForeArm = vrm.humanoid?.getNormalizedBoneNode('leftLowerArm')
-    const rightForeArm = vrm.humanoid?.getNormalizedBoneNode('rightLowerArm')
-    const leftLeg = vrm.humanoid?.getNormalizedBoneNode('leftUpperLeg')
-    const rightLeg = vrm.humanoid?.getNormalizedBoneNode('rightUpperLeg')
-    if (leftArm) { leftArm.rotation.z = -0.88; leftArm.rotation.x = swing * 0.26 }
-    if (rightArm) { rightArm.rotation.z = 0.88; rightArm.rotation.x = -swing * 0.26 }
-    if (leftForeArm) leftForeArm.rotation.z = -0.08
-    if (rightForeArm) rightForeArm.rotation.z = 0.08
-    if (leftLeg) leftLeg.rotation.x = -swing * 0.28
-    if (rightLeg) rightLeg.rotation.x = swing * 0.28
-    if (visual.current) visual.current.position.y = -0.68 + Math.sin(clock.elapsedTime * (1.7 + intensity * 3.2)) * (0.008 + intensity * 0.017)
+    if (visual.current) visual.current.position.y = -0.68 + Math.sin(clock.elapsedTime * 1.7) * (0.006 + intensity * 0.004)
     vrm.expressionManager?.setValue('blink', Math.max(0, Math.sin(clock.elapsedTime * 2.1) - 0.94) * 16)
   })
 
