@@ -15,10 +15,9 @@ type NexusRoomProps = {
   onMissionAnswer: (option: number) => void
 }
 
-function RoomNavigator({ station, missionActive, onMissionAnswer }: Pick<NexusRoomProps, 'station' | 'onMissionAnswer'> & { missionActive: boolean }) {
+function RoomNavigator({ station, missionActive, celebrating, onMissionAnswer }: Pick<NexusRoomProps, 'station' | 'onMissionAnswer'> & { missionActive: boolean, celebrating: boolean }) {
   const pressedKeys = useRef(new Set<string>())
   const moving = useRef(false)
-  const motion = useRef(0)
   const jumpQueued = useRef(false)
   const jump = useRef({ height: 0, velocity: 0 })
   const velocity = useRef<[number, number, number]>([0, 0, 0])
@@ -57,7 +56,6 @@ function RoomNavigator({ station, missionActive, onMissionAnswer }: Pick<NexusRo
     velocity.current = smoothVelocity(velocity.current, direction, delta, 2.85)
     const [x, , z] = velocity.current
     moving.current = Math.hypot(x, z) > 0.15
-    motion.current = Math.min(1, Math.hypot(x, z) / 2.85)
     jump.current = advanceJump(jump.current, jumpQueued.current, delta)
     jumpQueued.current = false
     explorer.current.position.y = -0.7 + jump.current.height
@@ -80,7 +78,7 @@ function RoomNavigator({ station, missionActive, onMissionAnswer }: Pick<NexusRo
 
   return <group ref={explorer} position={[0, -0.7, 4.4]}>
     <group position={[0, 0.55, 0]}>
-      <VrmLumi moving={moving} motion={motion} />
+      <VrmLumi moving={moving} celebrating={celebrating} />
       <mesh position={[0, -1.48, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.58, 0.67, 40]} /><meshBasicMaterial color="#b486ff" transparent opacity={0.78} /></mesh>
     </group>
   </group>
@@ -203,7 +201,7 @@ export function NexusRoom({ station, onReturn, missionState, onMissionAnswer }: 
   const inVoid = missionState?.phase === 'void'
   return (
     <group>
-      <RoomNavigator station={station} missionActive={missionActive} onMissionAnswer={onMissionAnswer} />
+      <RoomNavigator station={station} missionActive={missionActive} celebrating={missionState?.phase === 'success'} onMissionAnswer={onMissionAnswer} />
       <color attach="background" args={['#070512']} />
       <fog attach="fog" args={['#070512', 9, 26]} />
       <hemisphereLight args={['#bdc9ff', '#09020f', 1.05]} />

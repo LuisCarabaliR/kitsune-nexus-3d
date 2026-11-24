@@ -8,3 +8,11 @@
 - Asset SHA-256: `FFBD8C92A9E67C0A948F69C7A2EEC91E5C282C9AE70E9184309FC164D74CBC27`
 
 The VRoid sample-model terms permit its use as an avatar or character and do not require credit. See: https://vroid.pixiv.help/hc/en-us/articles/4402394424089-VRoidPreset-A-Z
+
+## `public/assets/animations/*.vrma`
+
+- Source: https://shapeweld.com/tools/vrm-animations
+- Files: `lumi-idle.vrma`, `lumi-walk.vrma`, and `lumi-happy.vrma`.
+- Use: motion-capture animation clips for Lumi's idle, walk, and mission-success celebration.
+
+Shapeweld describes these VRMA clips as free to use in projects, commercial or not; credit is welcome but not required.

@@ -1,33 +1,74 @@
 import { Text } from '@react-three/drei'
 import { useFrame, useLoader } from '@react-three/fiber'
 import { useEffect, useRef, type MutableRefObject } from 'react'
-import type { Group } from 'three'
+import { AnimationMixer, LoopOnce, LoopRepeat, type AnimationAction, type Group } from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { VRMLoaderPlugin, VRMUtils, type VRM } from '@pixiv/three-vrm'
+import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation'
 import { advanceJump, moveExplorer, movementFromKeys, smoothTurn, smoothVelocity } from './roomMovement'
 import { needsVrm0Rotation } from './vrmOrientation'
+import { selectAvatarMotion, type AvatarMotion } from './avatarMotion'
 
 type NexusExplorerProps = {
   onMove?: (position: [number, number, number]) => void
 }
 
 const avatarUrl = `${import.meta.env.BASE_URL}assets/lumi-hero.vrm`
+const motionUrls = [
+  `${import.meta.env.BASE_URL}assets/animations/lumi-idle.vrma`,
+  `${import.meta.env.BASE_URL}assets/animations/lumi-walk.vrma`,
+  `${import.meta.env.BASE_URL}assets/animations/lumi-happy.vrma`,
+]
 
-export function VrmLumi({ moving, motion }: { moving: MutableRefObject<boolean>, motion?: MutableRefObject<number> }) {
+export function VrmLumi({ moving, celebrating = false }: { moving: MutableRefObject<boolean>, celebrating?: boolean }) {
   const gltf = useLoader(GLTFLoader, avatarUrl, (loader) => loader.register((parser) => new VRMLoaderPlugin(parser)))
+  const motionGltfs = useLoader(GLTFLoader, motionUrls, (loader) => loader.register((parser) => new VRMAnimationLoaderPlugin(parser)))
   const vrm = gltf.userData.vrm as VRM | undefined
   const visual = useRef<Group>(null)
+  const mixer = useRef<AnimationMixer | null>(null)
+  const actions = useRef<Partial<Record<AvatarMotion, AnimationAction>>>({})
+  const activeMotion = useRef<AvatarMotion>('idle')
 
   useEffect(() => {
     if (!vrm?.meta || !('metaVersion' in vrm.meta)) return
     if (needsVrm0Rotation(vrm.meta.metaVersion)) VRMUtils.rotateVRM0(vrm)
   }, [vrm])
 
+  useEffect(() => {
+    if (!vrm) return
+    const [idleGltf, walkGltf, happyGltf] = motionGltfs
+    const idleAnimation = idleGltf?.userData.vrmAnimations?.[0]
+    const walkAnimation = walkGltf?.userData.vrmAnimations?.[0]
+    const happyAnimation = happyGltf?.userData.vrmAnimations?.[0]
+    if (!idleAnimation || !walkAnimation || !happyAnimation) return
+
+    const nextMixer = new AnimationMixer(vrm.scene)
+    const idle = nextMixer.clipAction(createVRMAnimationClip(idleAnimation, vrm)).setLoop(LoopRepeat, Infinity)
+    const walk = nextMixer.clipAction(createVRMAnimationClip(walkAnimation, vrm)).setLoop(LoopRepeat, Infinity)
+    const happy = nextMixer.clipAction(createVRMAnimationClip(happyAnimation, vrm)).setLoop(LoopOnce, 1)
+    happy.clampWhenFinished = true
+    actions.current = { idle, walk, happy }
+    activeMotion.current = 'idle'
+    idle.play()
+    mixer.current = nextMixer
+
+    return () => {
+      nextMixer.stopAllAction()
+      mixer.current = null
+      actions.current = {}
+    }
+  }, [motionGltfs, vrm])
+
   useFrame(({ clock }, delta) => {
     if (!vrm) return
+    const nextMotion = selectAvatarMotion({ moving: moving.current, celebrating })
+    if (nextMotion !== activeMotion.current) {
+      actions.current[activeMotion.current]?.fadeOut(0.16)
+      actions.current[nextMotion]?.reset().setEffectiveWeight(1).fadeIn(0.16).play()
+      activeMotion.current = nextMotion
+    }
+    mixer.current?.update(delta)
     vrm.update(delta)
-    const intensity = motion?.current ?? (moving.current ? 1 : 0)
-    if (visual.current) visual.current.position.y = -0.68 + Math.sin(clock.elapsedTime * 1.7) * (0.006 + intensity * 0.004)
     vrm.expressionManager?.setValue('blink', Math.max(0, Math.sin(clock.elapsedTime * 2.1) - 0.94) * 16)
   })
 
@@ -40,7 +81,6 @@ export function VrmLumi({ moving, motion }: { moving: MutableRefObject<boolean>,
 export function NexusExplorer({ onMove }: NexusExplorerProps) {
   const explorer = useRef<Group>(null)
   const moving = useRef(false)
-  const motion = useRef(0)
   const pressedKeys = useRef(new Set<string>())
   const jumpQueued = useRef(false)
   const jump = useRef({ height: 0, velocity: 0 })
@@ -75,7 +115,6 @@ export function NexusExplorer({ onMove }: NexusExplorerProps) {
     velocity.current = smoothVelocity(velocity.current, direction, delta, 2.7)
     const [x, , z] = velocity.current
     moving.current = Math.hypot(x, z) > 0.15
-    motion.current = Math.min(1, Math.hypot(x, z) / 2.7)
     if (moving.current) {
       const next = moveExplorer([explorer.current.position.x, 0, explorer.current.position.z], velocity.current, delta)
       explorer.current.position.x = next[0]
@@ -88,7 +127,7 @@ export function NexusExplorer({ onMove }: NexusExplorerProps) {
   return (
     <group ref={explorer} position={[0, -0.7, 4.8]} scale={1.08}>
       <group position={[0, 0.55, 0]}>
-        <VrmLumi moving={moving} motion={motion} />
+        <VrmLumi moving={moving} />
         <mesh position={[0, -1.48, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.58, 0.67, 40]} /><meshBasicMaterial color="#b486ff" transparent opacity={0.78} /></mesh>
         <pointLight position={[0, 0.35, 0.25]} color="#7cecff" intensity={1.1} distance={3.5} />
         <Text position={[0, 1.9, 0]} fontSize={0.13} color="#d8faff" anchorX="center">LUMI · EXPLORADORA</Text>
