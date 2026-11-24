@@ -28,6 +28,7 @@ function RoomNavigator({ station, missionActive, celebrating, onMissionAnswer }:
 
   useEffect(() => {
     camera.position.set(0, 2.5, 9)
+    camera.lookAt(0, 0.35, 1)
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.code === 'Space') {
         event.preventDefault()
@@ -71,10 +72,12 @@ function RoomNavigator({ station, missionActive, celebrating, onMissionAnswer }:
       if (selectedGate !== null) onMissionAnswer(selectedGate)
       interactQueued.current = false
     }
-    const focus = explorer.current.position.clone().add(new Vector3(0, 0.65, 0))
-    const desiredCamera = explorer.current.position.clone().add(new Vector3(0, 2.45, 6.35))
-    camera.position.lerp(desiredCamera, Math.min(1, delta * 3.15))
-    camera.lookAt(focus)
+    if (moving.current) {
+      const focus = explorer.current.position.clone().add(new Vector3(0, 0.65, 0))
+      const desiredCamera = explorer.current.position.clone().add(new Vector3(0, 2.45, 6.35))
+      camera.position.lerp(desiredCamera, Math.min(1, delta * 3.15))
+      camera.lookAt(focus)
+    }
   })
 
   return <group ref={explorer} position={[0, -0.7, 4.4]}>

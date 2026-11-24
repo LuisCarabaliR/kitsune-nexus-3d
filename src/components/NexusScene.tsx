@@ -8,6 +8,7 @@ import { NexusEnergyCore } from './NexusEnergyCore'
 import type { ExperienceMode } from './nexusNavigation'
 import { portalAtPosition } from './nexusSceneModel'
 import { plazaCameraPose } from './plazaCamera'
+import { roomCameraOrbit } from './roomCameraControls'
 import { Suspense, useRef } from 'react'
 import type { RoomMissionState } from './nexusExploration'
 
@@ -122,7 +123,16 @@ export function NexusScene({ onSelect, mode = 'nexus', station = stations[0], ac
         <Suspense fallback={null}>
           {mode === 'room' ? <NexusRoom station={station} onReturn={onReturnToNexus} missionState={missionState} onMissionAnswer={onMissionAnswer} /> : <NexusPlaza activeCoreIds={activeCoreIds} onActivateCore={onActivateCore} onSelect={onSelect} />}
         </Suspense>
-        <OrbitControls enabled={mode === 'nexus'} enablePan={false} target={initialPlazaCamera.target} minDistance={16} maxDistance={48} maxPolarAngle={Math.PI / 2.05} />
+        <OrbitControls
+          enablePan={false}
+          enableDamping
+          dampingFactor={0.08}
+          target={mode === 'nexus' ? initialPlazaCamera.target : [0, 0.35, 1]}
+          minDistance={mode === 'nexus' ? 16 : roomCameraOrbit.minDistance}
+          maxDistance={mode === 'nexus' ? 48 : roomCameraOrbit.maxDistance}
+          minPolarAngle={mode === 'nexus' ? 0 : roomCameraOrbit.minPolarAngle}
+          maxPolarAngle={mode === 'nexus' ? Math.PI / 2.05 : roomCameraOrbit.maxPolarAngle}
+        />
       </Canvas>
     </div>
   )

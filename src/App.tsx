@@ -128,7 +128,7 @@ export default function App() {
             </div>
           </section>
         </details>
-        <p className="accessibility-note" aria-label="Controles de la escena"><strong>Controles:</strong> W, A, S, D o flechas para moverte · Espacio para saltar · Arrastra con el mouse para observar toda la plaza · E para activar puertas de misión · Acércate a un portal para entrar.</p>
+        <p className="accessibility-note" aria-label="Controles de la escena"><strong>Controles:</strong> W, A, S, D o flechas para moverte · Espacio para saltar · Arrastra con el mouse y usa la rueda para observar cada escenario · E para activar puertas de misión · Acércate a un portal para entrar.</p>
       </section>
     </main>
   )
