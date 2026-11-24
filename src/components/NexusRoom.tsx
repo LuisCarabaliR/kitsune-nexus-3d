@@ -7,6 +7,7 @@ import type { Station } from '../data/stations'
 import { VrmLumi } from './NexusExplorer'
 import { advanceJump, moveRoomExplorer, movementFromKeys, smoothTurn, smoothVelocity } from './roomMovement'
 import { missionGateAtPosition, type RoomMissionState } from './nexusExploration'
+import { MissionCourse } from './missionCourse'
 
 type NexusRoomProps = {
   station: Station
@@ -112,6 +113,25 @@ function VoidRift() {
     <mesh><circleGeometry args={[2.25, 64]} /><meshBasicMaterial color="#06000f" transparent opacity={0.92} /></mesh>
     <pointLight color="#ff2e9a" intensity={22} distance={9} />
     <Text position={[0, -2.8, 0]} rotation={[Math.PI / 2, 0, 0]} fontSize={0.24} color="#ffd2eb" anchorX="center">GRIETA DIMENSIONAL · MISIÓN FALLIDA</Text>
+  </group>
+}
+
+function MissionGate({ station, option, index, onAnswer }: { station: Station, option: string, index: number, onAnswer: (option: number) => void }) {
+  const gate = useRef<Group>(null)
+
+  useFrame(({ clock }) => {
+    if (!gate.current) return
+    gate.current.rotation.y = Math.sin(clock.elapsedTime * 1.15 + index) * 0.16
+    gate.current.position.y = Math.sin(clock.elapsedTime * 2 + index) * 0.1
+  })
+
+  const x = (index - 1) * 2.15
+  return <group ref={gate} position={[x, 0, 0]} onClick={(event) => { event.stopPropagation(); onAnswer(index) }}>
+    <mesh castShadow><boxGeometry args={[1.35, 2.2, 0.32]} /><meshStandardMaterial color={station.theme.primary} emissive={station.theme.primary} emissiveIntensity={1.35} metalness={0.82} roughness={0.18} /></mesh>
+    <mesh position={[0, 0.1, 0.2]}><circleGeometry args={[0.35, 24]} /><meshBasicMaterial color={station.theme.secondary} /></mesh>
+    <mesh position={[0, 0.1, 0.24]} rotation={[0, 0, Math.PI / 4]}><torusGeometry args={[0.5, 0.045, 10, 32]} /><meshBasicMaterial color="#ffffff" transparent opacity={0.76} /></mesh>
+    <pointLight position={[0, 0.25, 0.35]} color={station.theme.secondary} intensity={4.8} distance={3.4} />
+    <Text position={[0, 1.33, 0.25]} maxWidth={1.35} fontSize={0.13} color="#ffffff" anchorX="center" textAlign="center">{option}</Text>
   </group>
 }
 
@@ -231,16 +251,9 @@ export function NexusRoom({ station, onReturn, missionState, onMissionAnswer }: 
       </Float>
       <RoomArchitecture station={station} />
       <StationLandscape station={station} />
+      {missionActive && <MissionCourse station={station} />}
       {missionActive && <group position={[0, -0.32, 2.65]}>
-        {station.room.challenge.options.map((option, index) => {
-          const x = (index - 1) * 2.15
-          return <group key={option} position={[x, 0, 0]} onClick={(event) => { event.stopPropagation(); onMissionAnswer(index) }}>
-            <mesh castShadow><boxGeometry args={[1.35, 2.2, 0.32]} /><meshStandardMaterial color={station.theme.primary} emissive={station.theme.primary} emissiveIntensity={1.35} metalness={0.82} roughness={0.18} /></mesh>
-            <mesh position={[0, 0.1, 0.2]}><circleGeometry args={[0.35, 24]} /><meshBasicMaterial color={station.theme.secondary} /></mesh>
-            <mesh position={[0, 0.1, 0.24]} rotation={[0, 0, Math.PI / 4]}><torusGeometry args={[0.5, 0.045, 10, 32]} /><meshBasicMaterial color="#ffffff" transparent opacity={0.76} /></mesh>
-            <Text position={[0, 1.33, 0.25]} maxWidth={1.35} fontSize={0.13} color="#ffffff" anchorX="center" textAlign="center">{option}</Text>
-          </group>
-        })}
+        {station.room.challenge.options.map((option, index) => <MissionGate key={option} station={station} option={option} index={index} onAnswer={onMissionAnswer} />)}
         <Text position={[0, 2.7, 0]} maxWidth={6.2} fontSize={0.23} color="#ffffff" anchorX="center" textAlign="center">{station.room.challenge.question}</Text>
         <Text position={[0, -1.05, 0]} fontSize={0.16} color="#ffb1d9" anchorX="center">ACÉRCATE A UNA PUERTA Y PRESIONA E · 2 FALLAS = GRIETA</Text>
       </group>}

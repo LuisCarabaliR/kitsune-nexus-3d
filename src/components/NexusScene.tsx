@@ -7,6 +7,7 @@ import { NexusExplorer } from './NexusExplorer'
 import { NexusEnergyCore } from './NexusEnergyCore'
 import type { ExperienceMode } from './nexusNavigation'
 import { portalAtPosition } from './nexusSceneModel'
+import { plazaCameraPose } from './plazaCamera'
 import { Suspense, useRef } from 'react'
 import type { RoomMissionState } from './nexusExploration'
 
@@ -26,6 +27,8 @@ const corePositions: Record<Station['id'], [number, number, number]> = {
   wind: [0, 0.2, -12],
   mecha: [10.5, -0.25, -5.5],
 }
+const plazaExplorerStart: [number, number, number] = [0, -0.7, 9]
+const initialPlazaCamera = plazaCameraPose(plazaExplorerStart)
 
 type NexusPlazaProps = {
   activeCoreIds: readonly Station['id'][]
@@ -108,18 +111,18 @@ function NexusPlaza({ activeCoreIds, onActivateCore, onSelect }: NexusPlazaProps
     {stations.map((item) => <NexusEnergyCore key={`core-${item.id}`} station={item} position={corePositions[item.id]} active={activeCoreIds.includes(item.id)} onActivate={onActivateCore} />)}
     {stations.map((item) => <NexusPortal key={item.id} station={item} unlocked onSelect={onSelect} />)}
     <Text position={[0, 0.55, -2.8]} fontSize={0.22} color="#d8d1ff" anchorX="center">PLAZA CENTRAL · ELIGE UN DISTRITO</Text>
-    <Suspense fallback={null}><NexusExplorer initialPosition={[0, -0.7, 9]} onMove={handleExplorerMove} /></Suspense>
+    <Suspense fallback={null}><NexusExplorer initialPosition={plazaExplorerStart} onMove={handleExplorerMove} /></Suspense>
   </>
 }
 
 export function NexusScene({ onSelect, mode = 'nexus', station = stations[0], activeCoreIds = [], onActivateCore = () => {}, onReturnToNexus = () => {}, missionState, onMissionAnswer = () => {} }: NexusSceneProps) {
   return (
     <div className="nexus-canvas" role="img" aria-label="Escena 3D del Nexus Central con tres portales explorables">
-      <Canvas camera={{ position: [0, 15, 30], fov: 54 }} shadows dpr={[1, 1.5]}>
+      <Canvas camera={{ position: initialPlazaCamera.position, fov: 54 }} shadows dpr={[1, 1.5]}>
         <Suspense fallback={null}>
           {mode === 'room' ? <NexusRoom station={station} onReturn={onReturnToNexus} missionState={missionState} onMissionAnswer={onMissionAnswer} /> : <NexusPlaza activeCoreIds={activeCoreIds} onActivateCore={onActivateCore} onSelect={onSelect} />}
         </Suspense>
-        <OrbitControls enabled={mode === 'nexus'} enablePan={false} target={[0, 0, -6]} minDistance={17} maxDistance={46} maxPolarAngle={Math.PI / 2.05} />
+        <OrbitControls enabled={mode === 'nexus'} enablePan={false} target={initialPlazaCamera.target} minDistance={16} maxDistance={48} maxPolarAngle={Math.PI / 2.05} />
       </Canvas>
     </div>
   )
