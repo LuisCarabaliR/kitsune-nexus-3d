@@ -6,7 +6,7 @@ import { Vector3, type Group } from 'three'
 import type { Station } from '../data/stations'
 import { VrmLumi } from './NexusExplorer'
 import { advanceJump, moveRoomExplorer, movementFromKeys, smoothTurn, smoothVelocity } from './roomMovement'
-import type { RoomMissionState } from './nexusExploration'
+import { missionGateAtPosition, type RoomMissionState } from './nexusExploration'
 
 type NexusRoomProps = {
   station: Station
@@ -15,12 +15,14 @@ type NexusRoomProps = {
   onMissionAnswer: (option: number) => void
 }
 
-function RoomNavigator({ station }: Pick<NexusRoomProps, 'station'>) {
+function RoomNavigator({ station, missionActive, onMissionAnswer }: Pick<NexusRoomProps, 'station' | 'onMissionAnswer'> & { missionActive: boolean }) {
   const pressedKeys = useRef(new Set<string>())
   const moving = useRef(false)
+  const motion = useRef(0)
   const jumpQueued = useRef(false)
   const jump = useRef({ height: 0, velocity: 0 })
   const velocity = useRef<[number, number, number]>([0, 0, 0])
+  const interactQueued = useRef(false)
   const explorer = useRef<Group>(null)
   const { camera } = useThree()
 
@@ -30,6 +32,10 @@ function RoomNavigator({ station }: Pick<NexusRoomProps, 'station'>) {
       if (event.code === 'Space') {
         event.preventDefault()
         if (!event.repeat) jumpQueued.current = true
+      }
+      if (event.code === 'KeyE' && missionActive && !event.repeat) {
+        event.preventDefault()
+        interactQueued.current = true
       }
       pressedKeys.current.add(event.code)
     }
@@ -43,7 +49,7 @@ function RoomNavigator({ station }: Pick<NexusRoomProps, 'station'>) {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
     }
-  }, [camera])
+  }, [camera, missionActive])
 
   useFrame((_, delta) => {
     if (!explorer.current) return
@@ -51,6 +57,7 @@ function RoomNavigator({ station }: Pick<NexusRoomProps, 'station'>) {
     velocity.current = smoothVelocity(velocity.current, direction, delta, 2.85)
     const [x, , z] = velocity.current
     moving.current = Math.hypot(x, z) > 0.15
+    motion.current = Math.min(1, Math.hypot(x, z) / 2.85)
     jump.current = advanceJump(jump.current, jumpQueued.current, delta)
     jumpQueued.current = false
     explorer.current.position.y = -0.7 + jump.current.height
@@ -60,17 +67,53 @@ function RoomNavigator({ station }: Pick<NexusRoomProps, 'station'>) {
       explorer.current.position.z = next[2]
       if (direction[0] || direction[2]) explorer.current.rotation.y = smoothTurn(explorer.current.rotation.y, Math.atan2(direction[0], direction[2]), delta)
     }
+    if (interactQueued.current) {
+      const selectedGate = missionGateAtPosition([explorer.current.position.x, 0, explorer.current.position.z])
+      if (selectedGate !== null) onMissionAnswer(selectedGate)
+      interactQueued.current = false
+    }
     const focus = explorer.current.position.clone().add(new Vector3(0, 0.65, 0))
-    const desiredCamera = explorer.current.position.clone().add(new Vector3(0, 2.3, 5.6))
-    camera.position.lerp(desiredCamera, Math.min(1, delta * 4.5))
+    const desiredCamera = explorer.current.position.clone().add(new Vector3(0, 2.45, 6.35))
+    camera.position.lerp(desiredCamera, Math.min(1, delta * 3.15))
     camera.lookAt(focus)
   })
 
   return <group ref={explorer} position={[0, -0.7, 4.4]}>
     <group position={[0, 0.55, 0]}>
-      <VrmLumi moving={moving} />
+      <VrmLumi moving={moving} motion={motion} />
       <mesh position={[0, -1.48, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.58, 0.67, 40]} /><meshBasicMaterial color="#b486ff" transparent opacity={0.78} /></mesh>
     </group>
+  </group>
+}
+
+function RewardPulse({ name, icon }: { name: string, icon: string }) {
+  const reward = useRef<Group>(null)
+
+  useFrame(({ clock }) => {
+    if (!reward.current) return
+    reward.current.rotation.y = clock.elapsedTime * 0.9
+    reward.current.position.y = 0.35 + Math.sin(clock.elapsedTime * 2.2) * 0.16
+  })
+
+  return <group ref={reward} position={[0, 0.35, 2.65]}>
+    <pointLight color="#a7fff1" intensity={18} distance={7} />
+    <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[1.12, 0.1, 16, 64]} /><meshStandardMaterial color="#66ffd8" emissive="#66ffd8" emissiveIntensity={3.2} metalness={0.88} roughness={0.12} /></mesh>
+    <mesh><octahedronGeometry args={[0.42, 1]} /><meshStandardMaterial color="#fff8c7" emissive="#b9ffea" emissiveIntensity={2.8} metalness={0.7} roughness={0.1} /></mesh>
+    <Text position={[0, 1.35, 0]} fontSize={0.22} color="#b9ffea" anchorX="center">MISIÓN ESTABILIZADA</Text>
+    <Text position={[0, 0.93, 0]} fontSize={0.17} color="#ffffff" anchorX="center">{`HABILIDAD OBTENIDA · ${icon} ${name}`}</Text>
+  </group>
+}
+
+function VoidRift() {
+  const rift = useRef<Group>(null)
+  useFrame(({ clock }) => {
+    if (rift.current) rift.current.rotation.z = clock.elapsedTime * 0.55
+  })
+  return <group ref={rift} position={[0, -0.95, 1.8]} rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh><torusGeometry args={[2.4, 0.22, 18, 88]} /><meshStandardMaterial color="#ff3b9d" emissive="#7d004c" emissiveIntensity={4} /></mesh>
+    <mesh><circleGeometry args={[2.25, 64]} /><meshBasicMaterial color="#06000f" transparent opacity={0.92} /></mesh>
+    <pointLight color="#ff2e9a" intensity={22} distance={9} />
+    <Text position={[0, -2.8, 0]} rotation={[Math.PI / 2, 0, 0]} fontSize={0.24} color="#ffd2eb" anchorX="center">GRIETA DIMENSIONAL · MISIÓN FALLIDA</Text>
   </group>
 }
 
@@ -160,7 +203,7 @@ export function NexusRoom({ station, onReturn, missionState, onMissionAnswer }: 
   const inVoid = missionState?.phase === 'void'
   return (
     <group>
-      <RoomNavigator station={station} />
+      <RoomNavigator station={station} missionActive={missionActive} onMissionAnswer={onMissionAnswer} />
       <color attach="background" args={['#070512']} />
       <fog attach="fog" args={['#070512', 9, 26]} />
       <hemisphereLight args={['#bdc9ff', '#09020f', 1.05]} />
@@ -196,22 +239,15 @@ export function NexusRoom({ station, onReturn, missionState, onMissionAnswer }: 
           return <group key={option} position={[x, 0, 0]} onClick={(event) => { event.stopPropagation(); onMissionAnswer(index) }}>
             <mesh castShadow><boxGeometry args={[1.35, 2.2, 0.32]} /><meshStandardMaterial color={station.theme.primary} emissive={station.theme.primary} emissiveIntensity={1.35} metalness={0.82} roughness={0.18} /></mesh>
             <mesh position={[0, 0.1, 0.2]}><circleGeometry args={[0.35, 24]} /><meshBasicMaterial color={station.theme.secondary} /></mesh>
+            <mesh position={[0, 0.1, 0.24]} rotation={[0, 0, Math.PI / 4]}><torusGeometry args={[0.5, 0.045, 10, 32]} /><meshBasicMaterial color="#ffffff" transparent opacity={0.76} /></mesh>
             <Text position={[0, 1.33, 0.25]} maxWidth={1.35} fontSize={0.13} color="#ffffff" anchorX="center" textAlign="center">{option}</Text>
           </group>
         })}
         <Text position={[0, 2.7, 0]} maxWidth={6.2} fontSize={0.23} color="#ffffff" anchorX="center" textAlign="center">{station.room.challenge.question}</Text>
-        <Text position={[0, -1.05, 0]} fontSize={0.16} color="#ffb1d9" anchorX="center">ELIGE UNA PUERTA · 2 FALLAS = GRIETA</Text>
+        <Text position={[0, -1.05, 0]} fontSize={0.16} color="#ffb1d9" anchorX="center">ACÉRCATE A UNA PUERTA Y PRESIONA E · 2 FALLAS = GRIETA</Text>
       </group>}
-      {missionState?.phase === 'success' && <group position={[0, 0.3, 2.65]}>
-        <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[1.1, 0.1, 16, 64]} /><meshStandardMaterial color="#66ffd8" emissive="#66ffd8" emissiveIntensity={3} /></mesh>
-        <Text position={[0, 1.45, 0]} fontSize={0.25} color="#b9ffea" anchorX="center">MISIÓN ESTABILIZADA</Text>
-      </group>}
-      {inVoid && <group position={[0, -0.95, 1.8]} rotation={[-Math.PI / 2, 0, 0]}>
-        <mesh><torusGeometry args={[2.4, 0.22, 18, 88]} /><meshStandardMaterial color="#ff3b9d" emissive="#7d004c" emissiveIntensity={4} /></mesh>
-        <mesh><circleGeometry args={[2.25, 64]} /><meshBasicMaterial color="#06000f" transparent opacity={0.92} /></mesh>
-        <pointLight color="#ff2e9a" intensity={22} distance={9} />
-        <Text position={[0, -2.8, 0]} rotation={[Math.PI / 2, 0, 0]} fontSize={0.24} color="#ffd2eb" anchorX="center">GRIETA DIMENSIONAL · MISIÓN FALLIDA</Text>
-      </group>}
+      {missionState?.phase === 'success' && missionState.reward && <RewardPulse name={missionState.reward.name} icon={missionState.reward.icon} />}
+      {inVoid && <VoidRift />}
       <group position={[0, -0.1, -5.2]} onClick={(event) => { event.stopPropagation(); onReturn() }}>
         <mesh>
           <torusGeometry args={[0.9, 0.13, 16, 72]} />

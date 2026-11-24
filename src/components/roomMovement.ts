@@ -64,5 +64,5 @@ export function advanceJump(state: JumpState, jumpQueued: boolean, delta: number
 }
 
 export function explorerWalkSwing(elapsedTime: number, moving: boolean): number {
-  return moving ? Math.sin(elapsedTime * 4) * 0.55 : 0
+  return moving ? Math.sin(elapsedTime * 5.2) * 0.34 : 0
 }

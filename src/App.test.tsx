@@ -69,7 +69,7 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Escena del Nexus/i }))
     expect(screen.getByRole('heading', { name: /Sala: Hangar Mecha/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Iniciar desafío opcional/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Activar misión 3D/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Volver al Nexus/i })).toBeInTheDocument()
   })
 
@@ -87,7 +87,7 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', { name: /Escena del Nexus/i }))
-    fireEvent.click(screen.getByRole('button', { name: /Iniciar desafío opcional/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Activar misión 3D/i }))
     fireEvent.click(screen.getByRole('button', { name: /Puerta de respuesta errónea/i }))
     expect(screen.getByText(/Fallas de estabilidad: 1\/2/i)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Puerta de respuesta errónea/i }))

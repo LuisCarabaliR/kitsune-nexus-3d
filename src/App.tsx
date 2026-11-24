@@ -81,16 +81,16 @@ export default function App() {
             {roomMission.phase === 'void' ? <section className="challenge-card" aria-label="Misión perdida">
               <p className="panel-label">FALLA DIMENSIONAL</p>
               <p className="challenge-feedback">Misión perdida · Lumi cayó en la grieta dimensional. Regresa al Nexus y entra de nuevo para reintentar.</p>
-            </section> : challengeOpen ? <section className="challenge-card" aria-label="Desafío opcional">
-              <p className="panel-label">DESAFÍO OPCIONAL</p>
-              <p className="challenge-question">{selectedStation.room.challenge.question}</p>
+            </section> : roomMission.phase === 'success' ? <section className="challenge-card" aria-label="Misión completada">
+              <p className="panel-label">HABILIDAD DESBLOQUEADA</p>
+              <p className="challenge-feedback correct">{roomMission.reward?.icon} {roomMission.reward?.name}</p>
+              <p className="challenge-feedback">{selectedStation.room.challenge.explanation}</p>
+            </section> : challengeOpen ? <section className="challenge-card" aria-label="Desafío de exploración">
+              <p className="panel-label">DESAFÍO EN ESCENA</p>
+              <p className="challenge-feedback">Lleva a Lumi frente a una de las tres puertas de energía y pulsa <strong>E</strong>. La respuesta se resuelve dentro del mundo, no en este panel.</p>
               <p className="mission-progress">Fallas de estabilidad: {roomMission.failures}/2</p>
-              <div className="challenge-options">
-                {selectedStation.room.challenge.options.map((option, index) => <button key={option} type="button" onClick={() => { setChosenOption(index); setRoomMission((current) => answerMission(current, selectedStation, index)) }}>{option}</button>)}
-              </div>
-              {roomMission.phase === 'success' ? <p className="challenge-feedback correct">Portal estabilizado. {selectedStation.room.challenge.explanation}</p> : chosenOption !== null && <p className="challenge-feedback">Falla de sincronía. Elige otra puerta o vuelve al Nexus.</p>}
-              <button className="room-action secondary" type="button" onClick={() => { setChallengeOpen(false); setChosenOption(null) }}>Seguir explorando</button>
-            </section> : <button className="room-action" type="button" onClick={() => { setChallengeOpen(true); setChosenOption(null); setRoomMission(startMission(createMissionState(selectedStation.id))) }}>Iniciar desafío opcional</button>}
+              <p className="challenge-feedback">Una primera falla altera el núcleo. A la segunda, la grieta dimensional se abre bajo la exploradora.</p>
+            </section> : <button className="room-action" type="button" onClick={() => { setChallengeOpen(true); setChosenOption(null); setRoomMission(startMission(createMissionState(selectedStation.id))) }}>Activar misión 3D</button>}
             <button className="room-action secondary" type="button" onClick={leaveRoom}>Volver al Nexus</button>
           </> : <>
             <button className="room-action" type="button" onClick={enterSelectedRoom}>Entrar a {selectedStation.name}</button>
@@ -128,7 +128,7 @@ export default function App() {
             </div>
           </section>
         </details>
-        <p className="accessibility-note" aria-label="Controles de la escena"><strong>Controles:</strong> W, A, S, D o flechas para moverte · Espacio para saltar · Acércate a un portal para entrar.</p>
+        <p className="accessibility-note" aria-label="Controles de la escena"><strong>Controles:</strong> W, A, S, D o flechas para moverte · Espacio para saltar · E para activar puertas de misión · Acércate a un portal para entrar.</p>
       </section>
     </main>
   )
