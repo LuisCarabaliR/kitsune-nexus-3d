@@ -125,6 +125,7 @@ export function NexusScene({ onSelect, mode = 'nexus', station = stations[0], ac
           {mode === 'room' ? <NexusRoom station={station} onReturn={onReturnToNexus} missionState={missionState} onMissionAnswer={onMissionAnswer} onActivateRelic={onActivateRelic} /> : <NexusPlaza activeCoreIds={activeCoreIds} onActivateCore={onActivateCore} onSelect={onSelect} />}
         </Suspense>
         <OrbitControls
+          makeDefault
           enablePan={false}
           enableDamping
           dampingFactor={0.08}

@@ -1,7 +1,8 @@
 import { Text } from '@react-three/drei'
-import { useFrame, useLoader } from '@react-three/fiber'
+import { useFrame, useLoader, useThree } from '@react-three/fiber'
 import { useEffect, useRef, type MutableRefObject } from 'react'
 import { AnimationMixer, LoopOnce, LoopRepeat, type AnimationAction, type Group } from 'three'
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { VRMLoaderPlugin, VRMUtils, type VRM } from '@pixiv/three-vrm'
 import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation'
@@ -80,6 +81,7 @@ export function VrmLumi({ moving, celebrating = false }: { moving: MutableRefObj
 }
 
 export function NexusExplorer({ onMove, initialPosition = [0, -0.7, 4.8] }: NexusExplorerProps) {
+  const { camera, controls } = useThree()
   const explorer = useRef<Group>(null)
   const moving = useRef(false)
   const pressedKeys = useRef(new Set<string>())
@@ -118,6 +120,15 @@ export function NexusExplorer({ onMove, initialPosition = [0, -0.7, 4.8] }: Nexu
     moving.current = Math.hypot(x, z) > 0.15
     if (moving.current) {
       const next = moveExplorer([explorer.current.position.x, 0, explorer.current.position.z], velocity.current, delta)
+      const dx = next[0] - explorer.current.position.x
+      const dz = next[2] - explorer.current.position.z
+      const orbit = controls as OrbitControlsImpl | null
+      if (orbit) {
+        orbit.target.x += dx
+        orbit.target.z += dz
+        camera.position.x += dx
+        camera.position.z += dz
+      }
       explorer.current.position.x = next[0]
       explorer.current.position.z = next[2]
       if (direction[0] || direction[2]) explorer.current.rotation.y = smoothTurn(explorer.current.rotation.y, Math.atan2(direction[0], direction[2]), delta)

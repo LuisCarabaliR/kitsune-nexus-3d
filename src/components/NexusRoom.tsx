@@ -17,7 +17,7 @@ type NexusRoomProps = {
   onActivateRelic: (relicId: number) => void
 }
 
-function RoomNavigator({ station, missionActive, missionReady, celebrating, onMissionAnswer, onActivateRelic }: Pick<NexusRoomProps, 'station' | 'onMissionAnswer' | 'onActivateRelic'> & { missionActive: boolean, missionReady: boolean, celebrating: boolean }) {
+function RoomNavigator({ station, missionActive, missionReady, celebrating, onMissionAnswer, onActivateRelic, onReturn }: Pick<NexusRoomProps, 'station' | 'onMissionAnswer' | 'onActivateRelic' | 'onReturn'> & { missionActive: boolean, missionReady: boolean, celebrating: boolean }) {
   const pressedKeys = useRef(new Set<string>())
   const moving = useRef(false)
   const jumpQueued = useRef(false)
@@ -25,6 +25,7 @@ function RoomNavigator({ station, missionActive, missionReady, celebrating, onMi
   const velocity = useRef<[number, number, number]>([0, 0, 0])
   const interactQueued = useRef(false)
   const explorer = useRef<Group>(null)
+  const returning = useRef(false)
   const { camera } = useThree()
 
   useEffect(() => {
@@ -67,6 +68,11 @@ function RoomNavigator({ station, missionActive, missionReady, celebrating, onMi
       const next = moveRoomExplorer(station.id, [explorer.current.position.x, 0, explorer.current.position.z], velocity.current, delta)
       explorer.current.position.x = next[0]
       explorer.current.position.z = next[2]
+      if (!returning.current && Math.hypot(next[0], next[2] - 8) < 0.9) {
+        returning.current = true
+        onReturn()
+        return
+      }
       if (direction[0] || direction[2]) explorer.current.rotation.y = smoothTurn(explorer.current.rotation.y, Math.atan2(direction[0], direction[2]), delta)
     }
     if (interactQueued.current) {
@@ -252,7 +258,7 @@ export function NexusRoom({ station, onReturn, missionState, onMissionAnswer, on
   const inVoid = missionState?.phase === 'void'
   return (
     <group>
-      <RoomNavigator station={station} missionActive={missionActive} missionReady={missionReady} celebrating={missionState?.phase === 'success'} onMissionAnswer={onMissionAnswer} onActivateRelic={onActivateRelic} />
+      <RoomNavigator station={station} missionActive={missionActive} missionReady={missionReady} celebrating={missionState?.phase === 'success'} onMissionAnswer={onMissionAnswer} onActivateRelic={onActivateRelic} onReturn={onReturn} />
       <color attach="background" args={['#070512']} />
       <fog attach="fog" args={['#070512', 9, 26]} />
       <hemisphereLight args={['#bdc9ff', '#09020f', 1.05]} />
@@ -292,7 +298,7 @@ export function NexusRoom({ station, onReturn, missionState, onMissionAnswer, on
       {missionActive && !missionReady && <Text position={[0, 1.78, 1.7]} fontSize={0.2} color={station.theme.secondary} anchorX="center">ACTIVA LOS 3 FRAGMENTOS DE RESONANCIA PARA MATERIALIZAR LAS COMPUERTAS</Text>}
       {missionState?.phase === 'success' && missionState.reward && <RewardPulse name={missionState.reward.name} icon={missionState.reward.icon} />}
       {inVoid && <VoidRift />}
-      <group position={[0, -0.1, -5.2]} onClick={(event) => { event.stopPropagation(); onReturn() }}>
+      <group position={[0, -0.1, 8]} onClick={(event) => { event.stopPropagation(); onReturn() }}>
         <mesh>
           <torusGeometry args={[0.9, 0.13, 16, 72]} />
           <meshStandardMaterial color="#8defff" emissive="#3d8cff" emissiveIntensity={2.8} metalness={0.9} roughness={0.12} />
@@ -302,7 +308,8 @@ export function NexusRoom({ station, onReturn, missionState, onMissionAnswer, on
           <meshBasicMaterial color="#304fff" transparent opacity={0.34} />
         </mesh>
         <pointLight color="#65dcff" intensity={11} distance={5} />
-        <Text position={[0, 1.25, 0]} fontSize={0.18} color="#c8f8ff" anchorX="center">PORTAL DE REGRESO</Text>
+        <Text position={[0, 1.5, 0]} fontSize={0.25} color="#c8f8ff" anchorX="center">REGRESAR AL NEXUS</Text>
+        <Text position={[0, 1.18, 0]} fontSize={0.14} color="#ffffff" anchorX="center">ATRAVIESA EL PORTAL</Text>
       </group>
       <Text position={[0, 3.35, 0]} fontSize={0.44} color="#f7f2ff" anchorX="center">
         {`SALA · ${station.name.toUpperCase()}`}
