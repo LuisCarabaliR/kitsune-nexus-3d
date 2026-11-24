@@ -3,12 +3,15 @@ import '@testing-library/jest-dom/vitest'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('./components/NexusScene', () => ({
-  NexusScene: ({ onSelect, onActivateCore, onReturnToNexus, onMissionAnswer }: { onSelect: (id: string) => void, onActivateCore?: (id: 'mecha') => void, onReturnToNexus?: () => void, onMissionAnswer?: (option: number) => void }) => (
+  NexusScene: ({ onSelect, onActivateCore, onReturnToNexus, onMissionAnswer, onActivateRelic }: { onSelect: (id: string) => void, onActivateCore?: (id: 'mecha') => void, onReturnToNexus?: () => void, onMissionAnswer?: (option: number) => void, onActivateRelic?: (id: number) => void }) => (
     <div>
       <button type="button" onClick={() => onSelect('mecha')}>Escena del Nexus</button>
       <button type="button" onClick={() => onActivateCore?.('mecha')}>Activar núcleo desde escena</button>
       <button type="button" onClick={() => onReturnToNexus?.()}>Portal de regreso 3D</button>
       <button type="button" onClick={() => onMissionAnswer?.(1)}>Puerta de respuesta errónea</button>
+      <button type="button" onClick={() => onActivateRelic?.(0)}>Fragmento de escena 1</button>
+      <button type="button" onClick={() => onActivateRelic?.(1)}>Fragmento de escena 2</button>
+      <button type="button" onClick={() => onActivateRelic?.(2)}>Fragmento de escena 3</button>
     </div>
   ),
 }))
@@ -88,6 +91,9 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Escena del Nexus/i }))
     fireEvent.click(screen.getByRole('button', { name: /Activar misión 3D/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Fragmento de escena 1/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Fragmento de escena 2/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Fragmento de escena 3/i }))
     fireEvent.click(screen.getByRole('button', { name: /Puerta de respuesta errónea/i }))
     expect(screen.getByText(/Fallas de estabilidad: 1\/2/i)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Puerta de respuesta errónea/i }))

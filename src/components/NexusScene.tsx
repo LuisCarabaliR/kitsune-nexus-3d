@@ -21,6 +21,7 @@ type NexusSceneProps = {
   onReturnToNexus?: () => void
   missionState?: RoomMissionState
   onMissionAnswer?: (option: number) => void
+  onActivateRelic?: (relicId: number) => void
 }
 
 const corePositions: Record<Station['id'], [number, number, number]> = {
@@ -116,12 +117,12 @@ function NexusPlaza({ activeCoreIds, onActivateCore, onSelect }: NexusPlazaProps
   </>
 }
 
-export function NexusScene({ onSelect, mode = 'nexus', station = stations[0], activeCoreIds = [], onActivateCore = () => {}, onReturnToNexus = () => {}, missionState, onMissionAnswer = () => {} }: NexusSceneProps) {
+export function NexusScene({ onSelect, mode = 'nexus', station = stations[0], activeCoreIds = [], onActivateCore = () => {}, onReturnToNexus = () => {}, missionState, onMissionAnswer = () => {}, onActivateRelic = () => {} }: NexusSceneProps) {
   return (
     <div className="nexus-canvas" role="img" aria-label="Escena 3D del Nexus Central con tres portales explorables">
       <Canvas camera={{ position: initialPlazaCamera.position, fov: 54 }} shadows dpr={[1, 1.5]}>
         <Suspense fallback={null}>
-          {mode === 'room' ? <NexusRoom station={station} onReturn={onReturnToNexus} missionState={missionState} onMissionAnswer={onMissionAnswer} /> : <NexusPlaza activeCoreIds={activeCoreIds} onActivateCore={onActivateCore} onSelect={onSelect} />}
+          {mode === 'room' ? <NexusRoom station={station} onReturn={onReturnToNexus} missionState={missionState} onMissionAnswer={onMissionAnswer} onActivateRelic={onActivateRelic} /> : <NexusPlaza activeCoreIds={activeCoreIds} onActivateCore={onActivateCore} onSelect={onSelect} />}
         </Suspense>
         <OrbitControls
           enablePan={false}

@@ -6,7 +6,7 @@ import { Vector3, type Group } from 'three'
 import type { Station } from '../data/stations'
 import { VrmLumi } from './NexusExplorer'
 import { advanceJump, moveRoomExplorer, movementFromKeys, smoothTurn, smoothVelocity } from './roomMovement'
-import { missionGateAtPosition, selectGateOnJump, type RoomMissionState } from './nexusExploration'
+import { isMissionReady, missionGateAtPosition, missionRelicPositions, relicAtPosition, selectGateOnJump, type RoomMissionState } from './nexusExploration'
 import { MissionCourse } from './missionCourse'
 
 type NexusRoomProps = {
@@ -14,9 +14,10 @@ type NexusRoomProps = {
   onReturn: () => void
   missionState?: RoomMissionState
   onMissionAnswer: (option: number) => void
+  onActivateRelic: (relicId: number) => void
 }
 
-function RoomNavigator({ station, missionActive, celebrating, onMissionAnswer }: Pick<NexusRoomProps, 'station' | 'onMissionAnswer'> & { missionActive: boolean, celebrating: boolean }) {
+function RoomNavigator({ station, missionActive, missionReady, celebrating, onMissionAnswer, onActivateRelic }: Pick<NexusRoomProps, 'station' | 'onMissionAnswer' | 'onActivateRelic'> & { missionActive: boolean, missionReady: boolean, celebrating: boolean }) {
   const pressedKeys = useRef(new Set<string>())
   const moving = useRef(false)
   const jumpQueued = useRef(false)
@@ -69,11 +70,16 @@ function RoomNavigator({ station, missionActive, celebrating, onMissionAnswer }:
       if (direction[0] || direction[2]) explorer.current.rotation.y = smoothTurn(explorer.current.rotation.y, Math.atan2(direction[0], direction[2]), delta)
     }
     if (interactQueued.current) {
-      const selectedGate = missionGateAtPosition([explorer.current.position.x, 0, explorer.current.position.z])
-      if (selectedGate !== null) onMissionAnswer(selectedGate)
+      const position: [number, number, number] = [explorer.current.position.x, 0, explorer.current.position.z]
+      const relicId = relicAtPosition(position)
+      if (relicId !== null) onActivateRelic(relicId)
+      else if (missionReady) {
+        const selectedGate = missionGateAtPosition(position)
+        if (selectedGate !== null) onMissionAnswer(selectedGate)
+      }
       interactQueued.current = false
     }
-    if (missionActive) {
+    if (missionReady) {
       const selectedGate = selectGateOnJump([explorer.current.position.x, 0, explorer.current.position.z], jumped)
       if (selectedGate !== null) onMissionAnswer(selectedGate)
     }
@@ -90,6 +96,22 @@ function RoomNavigator({ station, missionActive, celebrating, onMissionAnswer }:
       <VrmLumi moving={moving} celebrating={celebrating} />
       <mesh position={[0, -1.48, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.58, 0.67, 40]} /><meshBasicMaterial color="#b486ff" transparent opacity={0.78} /></mesh>
     </group>
+  </group>
+}
+
+function MissionRelics({ station, activatedRelicIds, onActivateRelic }: { station: Station, activatedRelicIds: readonly number[], onActivateRelic: (relicId: number) => void }) {
+  return <group>
+    {missionRelicPositions.map(([x, , z], index) => {
+      const activated = activatedRelicIds.includes(index)
+      return <Float key={index} speed={1.05 + index * 0.12} floatIntensity={0.34} rotationIntensity={0.28}>
+        <group position={[x, -0.35, z]} onClick={(event) => { event.stopPropagation(); onActivateRelic(index) }}>
+          <mesh castShadow><octahedronGeometry args={[0.48, 1]} /><meshStandardMaterial color={activated ? '#97ffe5' : station.theme.primary} emissive={activated ? '#45e9bc' : station.theme.secondary} emissiveIntensity={activated ? 2.1 : 1.25} metalness={0.82} roughness={0.12} /></mesh>
+          <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.72, 0.045, 10, 42]} /><meshBasicMaterial color={activated ? '#ffffff' : station.theme.secondary} transparent opacity={0.86} /></mesh>
+          <pointLight color={activated ? '#8dffe3' : station.theme.secondary} intensity={activated ? 6 : 3.2} distance={4.5} />
+          <Text position={[0, 0.92, 0]} fontSize={0.14} color="#ffffff" anchorX="center">{activated ? `FRAGMENTO ${index + 1} · ACTIVO` : `FRAGMENTO ${index + 1}`}</Text>
+        </group>
+      </Float>
+    })}
   </group>
 }
 
@@ -224,12 +246,13 @@ function StationLandscape({ station }: Pick<NexusRoomProps, 'station'>) {
   </group>
 }
 
-export function NexusRoom({ station, onReturn, missionState, onMissionAnswer }: NexusRoomProps) {
+export function NexusRoom({ station, onReturn, missionState, onMissionAnswer, onActivateRelic }: NexusRoomProps) {
   const missionActive = missionState?.phase === 'active'
+  const missionReady = missionState ? isMissionReady(missionState) : false
   const inVoid = missionState?.phase === 'void'
   return (
     <group>
-      <RoomNavigator station={station} missionActive={missionActive} celebrating={missionState?.phase === 'success'} onMissionAnswer={onMissionAnswer} />
+      <RoomNavigator station={station} missionActive={missionActive} missionReady={missionReady} celebrating={missionState?.phase === 'success'} onMissionAnswer={onMissionAnswer} onActivateRelic={onActivateRelic} />
       <color attach="background" args={['#070512']} />
       <fog attach="fog" args={['#070512', 9, 26]} />
       <hemisphereLight args={['#bdc9ff', '#09020f', 1.05]} />
@@ -259,12 +282,14 @@ export function NexusRoom({ station, onReturn, missionState, onMissionAnswer }: 
       </Float>
       <RoomArchitecture station={station} />
       <StationLandscape station={station} />
-      {missionActive && <MissionCourse station={station} />}
-      {missionActive && <group position={[0, -0.32, 2.65]}>
+      {missionActive && <MissionRelics station={station} activatedRelicIds={missionState?.activatedRelicIds ?? []} onActivateRelic={onActivateRelic} />}
+      {missionReady && <MissionCourse station={station} />}
+      {missionReady && <group position={[0, -0.32, 2.65]}>
         {station.room.challenge.options.map((option, index) => <MissionGate key={option} station={station} option={option} index={index} onAnswer={onMissionAnswer} />)}
         <Text position={[0, 2.7, 0]} maxWidth={6.2} fontSize={0.23} color="#ffffff" anchorX="center" textAlign="center">{station.room.challenge.question}</Text>
         <Text position={[0, -1.05, 0]} fontSize={0.16} color="#ffb1d9" anchorX="center">SALTA SOBRE UNA RUTA O PRESIONA E · CLIC TAMBIÉN DISPONIBLE · 2 FALLAS = GRIETA</Text>
       </group>}
+      {missionActive && !missionReady && <Text position={[0, 1.78, 1.7]} fontSize={0.2} color={station.theme.secondary} anchorX="center">ACTIVA LOS 3 FRAGMENTOS DE RESONANCIA PARA MATERIALIZAR LAS COMPUERTAS</Text>}
       {missionState?.phase === 'success' && missionState.reward && <RewardPulse name={missionState.reward.name} icon={missionState.reward.icon} />}
       {inVoid && <VoidRift />}
       <group position={[0, -0.1, -5.2]} onClick={(event) => { event.stopPropagation(); onReturn() }}>

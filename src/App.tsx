@@ -3,7 +3,7 @@ import { NexusScene } from './components/NexusScene'
 import { getStation, stations } from './data/stations'
 import { enterRoom, returnToNexus, type ExperienceMode } from './components/nexusNavigation'
 import { activateCore, createMission, isPortalUnlocked, missionProgress } from './components/nexusMission'
-import { answerMission, createExplorationProgress, createMissionState, explorationCount, exploreStation, startMission, type RoomMissionState } from './components/nexusExploration'
+import { activateRelic, answerMission, createExplorationProgress, createMissionState, isMissionReady, relicProgress, explorationCount, exploreStation, startMission, type RoomMissionState } from './components/nexusExploration'
 import { clearExplorationProgress, loadExplorationProgress, saveExplorationProgress } from './components/nexusProgressStorage'
 import './styles.css'
 
@@ -18,6 +18,8 @@ export default function App() {
   const selectedStation = useMemo(() => getStation(selectedId) ?? stations[0], [selectedId])
   const progress = missionProgress(mission)
   const exploredCount = explorationCount(exploration)
+  const activeRelics = relicProgress(roomMission)
+  const missionReady = isMissionReady(roomMission)
   useEffect(() => {
     saveExplorationProgress(window.localStorage, exploration)
   }, [exploration])
@@ -43,7 +45,7 @@ export default function App() {
           setChosenOption(null)
           setRoomMission(createMissionState(id))
           setMode(enterRoom(id).mode)
-        }} mode={mode} station={selectedStation} activeCoreIds={mission.activeCoreIds} onActivateCore={(id) => setMission((currentMission) => activateCore(currentMission, id))} onReturnToNexus={leaveRoom} missionState={roomMission} onMissionAnswer={(option) => {
+        }} mode={mode} station={selectedStation} activeCoreIds={mission.activeCoreIds} onActivateCore={(id) => setMission((currentMission) => activateCore(currentMission, id))} onReturnToNexus={leaveRoom} missionState={roomMission} onActivateRelic={(relicId) => setRoomMission((current) => activateRelic(current, relicId))} onMissionAnswer={(option) => {
           const next = answerMission(roomMission, selectedStation, option)
           setChosenOption(option)
           setRoomMission(next)
@@ -87,7 +89,12 @@ export default function App() {
               <p className="challenge-feedback">{selectedStation.room.challenge.explanation}</p>
             </section> : challengeOpen ? <section className="challenge-card" aria-label="Desafío de exploración">
               <p className="panel-label">DESAFÍO EN ESCENA</p>
-              <p className="challenge-feedback">Lleva a Lumi frente a una de las tres puertas de energía y pulsa <strong>E</strong>. La respuesta se resuelve dentro del mundo, no en este panel.</p>
+              <p className="challenge-feedback">Explora la sala y sincroniza los tres fragmentos de resonancia. Cada uno puede activarse con <strong>E</strong> cerca de él o con clic en la escena.</p>
+              <p className="mission-progress">Fragmentos sincronizados: {activeRelics}/3</p>
+              <div className="core-actions">
+                {[0, 1, 2].map((relicId) => <button className={roomMission.activatedRelicIds.includes(relicId) ? 'core-action active' : 'core-action'} key={relicId} type="button" disabled={roomMission.activatedRelicIds.includes(relicId)} onClick={() => setRoomMission((current) => activateRelic(current, relicId))}>Sincronizar fragmento {relicId + 1}</button>)}
+              </div>
+              <p className="challenge-feedback">{missionReady ? 'Las compuertas se materializaron: llega a una ruta, salta para elegir o usa E.' : 'Las compuertas aparecerán al sincronizar los tres fragmentos.'}</p>
               <p className="mission-progress">Fallas de estabilidad: {roomMission.failures}/2</p>
               <p className="challenge-feedback">Una primera falla altera el núcleo. A la segunda, la grieta dimensional se abre bajo la exploradora.</p>
             </section> : <button className="room-action" type="button" onClick={() => { setChallengeOpen(true); setChosenOption(null); setRoomMission(startMission(createMissionState(selectedStation.id))) }}>Activar misión 3D</button>}
