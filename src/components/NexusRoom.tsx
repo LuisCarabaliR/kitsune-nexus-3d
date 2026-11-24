@@ -6,7 +6,7 @@ import { Vector3, type Group } from 'three'
 import type { Station } from '../data/stations'
 import { VrmLumi } from './NexusExplorer'
 import { advanceJump, moveRoomExplorer, movementFromKeys, smoothTurn, smoothVelocity } from './roomMovement'
-import { missionGateAtPosition, type RoomMissionState } from './nexusExploration'
+import { missionGateAtPosition, selectGateOnJump, type RoomMissionState } from './nexusExploration'
 import { MissionCourse } from './missionCourse'
 
 type NexusRoomProps = {
@@ -58,7 +58,8 @@ function RoomNavigator({ station, missionActive, celebrating, onMissionAnswer }:
     velocity.current = smoothVelocity(velocity.current, direction, delta, 2.85)
     const [x, , z] = velocity.current
     moving.current = Math.hypot(x, z) > 0.15
-    jump.current = advanceJump(jump.current, jumpQueued.current, delta)
+    const jumped = jumpQueued.current
+    jump.current = advanceJump(jump.current, jumped, delta)
     jumpQueued.current = false
     explorer.current.position.y = -0.7 + jump.current.height
     if (moving.current) {
@@ -71,6 +72,10 @@ function RoomNavigator({ station, missionActive, celebrating, onMissionAnswer }:
       const selectedGate = missionGateAtPosition([explorer.current.position.x, 0, explorer.current.position.z])
       if (selectedGate !== null) onMissionAnswer(selectedGate)
       interactQueued.current = false
+    }
+    if (missionActive) {
+      const selectedGate = selectGateOnJump([explorer.current.position.x, 0, explorer.current.position.z], jumped)
+      if (selectedGate !== null) onMissionAnswer(selectedGate)
     }
     if (moving.current) {
       const focus = explorer.current.position.clone().add(new Vector3(0, 0.65, 0))
@@ -258,7 +263,7 @@ export function NexusRoom({ station, onReturn, missionState, onMissionAnswer }: 
       {missionActive && <group position={[0, -0.32, 2.65]}>
         {station.room.challenge.options.map((option, index) => <MissionGate key={option} station={station} option={option} index={index} onAnswer={onMissionAnswer} />)}
         <Text position={[0, 2.7, 0]} maxWidth={6.2} fontSize={0.23} color="#ffffff" anchorX="center" textAlign="center">{station.room.challenge.question}</Text>
-        <Text position={[0, -1.05, 0]} fontSize={0.16} color="#ffb1d9" anchorX="center">ACÉRCATE A UNA PUERTA Y PRESIONA E · 2 FALLAS = GRIETA</Text>
+        <Text position={[0, -1.05, 0]} fontSize={0.16} color="#ffb1d9" anchorX="center">SALTA SOBRE UNA RUTA O PRESIONA E · CLIC TAMBIÉN DISPONIBLE · 2 FALLAS = GRIETA</Text>
       </group>}
       {missionState?.phase === 'success' && missionState.reward && <RewardPulse name={missionState.reward.name} icon={missionState.reward.icon} />}
       {inVoid && <VoidRift />}

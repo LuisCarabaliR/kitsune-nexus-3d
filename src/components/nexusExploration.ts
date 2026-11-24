@@ -35,6 +35,10 @@ export function missionGateAtPosition(position: readonly [number, number, number
   return gateIndex === -1 ? null : gateIndex
 }
 
+export function selectGateOnJump(position: readonly [number, number, number], jumped: boolean): number | null {
+  return jumped ? missionGateAtPosition(position) : null
+}
+
 export function createExplorationProgress(): ExplorationProgress {
   return { exploredStationIds: [] }
 }

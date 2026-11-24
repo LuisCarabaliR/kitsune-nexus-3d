@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { answerMission, createExplorationProgress, createMissionState, exploreStation, explorationCount, missionGateAtPosition, startMission } from './nexusExploration'
+import { answerMission, createExplorationProgress, createMissionState, exploreStation, explorationCount, missionGateAtPosition, selectGateOnJump, startMission } from './nexusExploration'
 import { getStation } from '../data/stations'
 
 const mecha = getStation('mecha')!
@@ -30,6 +30,11 @@ describe('nexus mission risk model', () => {
   it('only selects a mission gate when Lumi is close enough to it', () => {
     expect(missionGateAtPosition([0, 0, 2.65])).toBe(1)
     expect(missionGateAtPosition([8, 0, 8])).toBeNull()
+  })
+
+  it('selects a nearby gate when Lumi jumps and leaves it untouched otherwise', () => {
+    expect(selectGateOnJump([0, 0, 3.45], true)).toBe(1)
+    expect(selectGateOnJump([0, 0, 3.45], false)).toBeNull()
   })
 
   it('counts each explored station once', () => {
