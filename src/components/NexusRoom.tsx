@@ -135,7 +135,7 @@ function RewardPulse({ name, icon }: { name: string, icon: string }) {
     <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[1.12, 0.1, 16, 64]} /><meshStandardMaterial color="#66ffd8" emissive="#66ffd8" emissiveIntensity={3.2} metalness={0.88} roughness={0.12} /></mesh>
     <mesh><octahedronGeometry args={[0.42, 1]} /><meshStandardMaterial color="#fff8c7" emissive="#b9ffea" emissiveIntensity={2.8} metalness={0.7} roughness={0.1} /></mesh>
     <Text position={[0, 1.35, 0]} fontSize={0.22} color="#b9ffea" anchorX="center">MISIÓN ESTABILIZADA</Text>
-    <Text position={[0, 0.93, 0]} fontSize={0.17} color="#ffffff" anchorX="center">{`HABILIDAD OBTENIDA · ${icon} ${name}`}</Text>
+    <Text position={[0, 0.93, 0]} fontSize={0.17} color="#ffffff" anchorX="center">{`RECOMPENSA · ${icon} ${name}`}</Text>
   </group>
 }
 

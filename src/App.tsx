@@ -84,7 +84,7 @@ export default function App() {
               <p className="panel-label">FALLA DIMENSIONAL</p>
               <p className="challenge-feedback">Misión perdida · Lumi cayó en la grieta dimensional. Regresa al Nexus y entra de nuevo para reintentar.</p>
             </section> : roomMission.phase === 'success' ? <section className="challenge-card" aria-label="Misión completada">
-              <p className="panel-label">HABILIDAD DESBLOQUEADA</p>
+              <p className="panel-label">RECOMPENSA DE MISIÓN</p>
               <p className="challenge-feedback correct">{roomMission.reward?.icon} {roomMission.reward?.name}</p>
               <p className="challenge-feedback">{selectedStation.room.challenge.explanation}</p>
             </section> : challengeOpen ? <section className="challenge-card" aria-label="Desafío de exploración">
@@ -95,6 +95,14 @@ export default function App() {
                 {[0, 1, 2].map((relicId) => <button className={roomMission.activatedRelicIds.includes(relicId) ? 'core-action active' : 'core-action'} key={relicId} type="button" disabled={roomMission.activatedRelicIds.includes(relicId)} onClick={() => setRoomMission((current) => activateRelic(current, relicId))}>Sincronizar fragmento {relicId + 1}</button>)}
               </div>
               <p className="challenge-feedback">{missionReady ? 'Las compuertas se materializaron: llega a una ruta, salta para elegir o usa E.' : 'Las compuertas aparecerán al sincronizar los tres fragmentos.'}</p>
+              {missionReady && <div className="core-actions" aria-label="Respuestas de la misión">
+                <p>{selectedStation.room.challenge.question}</p>
+                {selectedStation.room.challenge.options.map((option, index) => <button className="core-action" type="button" key={option} onClick={() => {
+                  const next = answerMission(roomMission, selectedStation, index)
+                  setRoomMission(next)
+                  if (next.phase === 'success') setExploration((current) => exploreStation(current, selectedStation.id))
+                }}>{option}</button>)}
+              </div>}
               <p className="mission-progress">Fallas de estabilidad: {roomMission.failures}/2</p>
               <p className="challenge-feedback">Una primera falla altera el núcleo. A la segunda, la grieta dimensional se abre bajo la exploradora.</p>
             </section> : <button className="room-action" type="button" onClick={() => { setChallengeOpen(true); setChosenOption(null); setRoomMission(startMission(createMissionState(selectedStation.id))) }}>Activar misión 3D</button>}
