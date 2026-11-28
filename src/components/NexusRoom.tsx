@@ -24,6 +24,7 @@ function RoomNavigator({ station, missionActive, missionReady, celebrating, onMi
   const moving = useRef(false)
   const jumpQueued = useRef(false)
   const jump = useRef({ height: 0, velocity: 0 })
+  const jumpStage = useRef(0)
   const velocity = useRef<[number, number, number]>([0, 0, 0])
   const interactQueued = useRef(false)
   const explorer = useRef<Group>(null)
@@ -67,6 +68,7 @@ function RoomNavigator({ station, missionActive, missionReady, celebrating, onMi
     moving.current = Math.hypot(x, z) > 0.15
     const jumped = jumpQueued.current
     jump.current = advanceJump(jump.current, jumped, delta)
+    jumpStage.current = jump.current.height > 0 ? 1 : 0
     jumpQueued.current = false
     explorer.current.position.y = -0.7 + jump.current.height
     if (moving.current) {
@@ -102,7 +104,7 @@ function RoomNavigator({ station, missionActive, missionReady, celebrating, onMi
 
   return <group ref={explorer} position={[0, -0.7, 4.4]}>
     <group position={[0, 0.55, 0]}>
-      <VrmLumi moving={moving} celebrating={celebrating} />
+      <VrmLumi moving={moving} jumpStage={jumpStage} celebrating={celebrating} />
       <mesh position={[0, -1.48, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.58, 0.67, 40]} /><meshBasicMaterial color="#b486ff" transparent opacity={0.78} /></mesh>
     </group>
   </group>

@@ -24,9 +24,11 @@ const motionUrls = [
   `${import.meta.env.BASE_URL}assets/animations/lumi-walk.vrma`,
   `${import.meta.env.BASE_URL}assets/animations/lumi-happy.vrma`,
   `${import.meta.env.BASE_URL}assets/animations/lumi-run.vrma`,
+  `${import.meta.env.BASE_URL}assets/animations/lumi-jump.vrma`,
+  `${import.meta.env.BASE_URL}assets/animations/lumi-double-jump.vrma`,
 ]
 
-export function VrmLumi({ moving, running, celebrating = false }: { moving: MutableRefObject<boolean>, running?: MutableRefObject<boolean>, celebrating?: boolean }) {
+export function VrmLumi({ moving, running, jumpStage, celebrating = false }: { moving: MutableRefObject<boolean>, running?: MutableRefObject<boolean>, jumpStage?: MutableRefObject<number>, celebrating?: boolean }) {
   const gltf = useLoader(GLTFLoader, avatarUrl, (loader) => loader.register((parser) => new VRMLoaderPlugin(parser)))
   const motionGltfs = useLoader(GLTFLoader, motionUrls, (loader) => loader.register((parser) => new VRMAnimationLoaderPlugin(parser)))
   const vrm = gltf.userData.vrm as VRM | undefined
@@ -42,20 +44,25 @@ export function VrmLumi({ moving, running, celebrating = false }: { moving: Muta
 
   useEffect(() => {
     if (!vrm) return
-    const [idleGltf, walkGltf, happyGltf, runGltf] = motionGltfs
+    const [idleGltf, walkGltf, happyGltf, runGltf, jumpGltf, doubleJumpGltf] = motionGltfs
     const idleAnimation = idleGltf?.userData.vrmAnimations?.[0]
     const walkAnimation = walkGltf?.userData.vrmAnimations?.[0]
     const happyAnimation = happyGltf?.userData.vrmAnimations?.[0]
     const runAnimation = runGltf?.userData.vrmAnimations?.[0]
-    if (!idleAnimation || !walkAnimation || !happyAnimation || !runAnimation) return
+    const jumpAnimation = jumpGltf?.userData.vrmAnimations?.[0]
+    const doubleJumpAnimation = doubleJumpGltf?.userData.vrmAnimations?.[0]
+    if (!idleAnimation || !walkAnimation || !happyAnimation || !runAnimation || !jumpAnimation || !doubleJumpAnimation) return
 
     const nextMixer = new AnimationMixer(vrm.scene)
     const idle = nextMixer.clipAction(createVRMAnimationClip(idleAnimation, vrm)).setLoop(LoopRepeat, Infinity)
     const walk = nextMixer.clipAction(createVRMAnimationClip(walkAnimation, vrm)).setLoop(LoopRepeat, Infinity)
     const happy = nextMixer.clipAction(createVRMAnimationClip(happyAnimation, vrm)).setLoop(LoopOnce, 1)
     const run = nextMixer.clipAction(createVRMAnimationClip(runAnimation, vrm)).setLoop(LoopRepeat, Infinity)
+    const jump = nextMixer.clipAction(createVRMAnimationClip(jumpAnimation, vrm)).setLoop(LoopOnce, 1)
+    const doubleJump = nextMixer.clipAction(createVRMAnimationClip(doubleJumpAnimation, vrm)).setLoop(LoopRepeat, Infinity)
+    jump.clampWhenFinished = true
     happy.clampWhenFinished = true
-    actions.current = { idle, walk, run, happy }
+    actions.current = { idle, walk, run, happy, jump, doubleJump }
     activeMotion.current = 'idle'
     idle.play()
     mixer.current = nextMixer
@@ -69,7 +76,7 @@ export function VrmLumi({ moving, running, celebrating = false }: { moving: Muta
 
   useFrame(({ clock }, delta) => {
     if (!vrm) return
-    const nextMotion = selectAvatarMotion({ moving: moving.current, running: running?.current ?? false, celebrating })
+    const nextMotion = selectAvatarMotion({ moving: moving.current, running: running?.current ?? false, jump: jumpStage?.current ?? 0, celebrating })
     if (nextMotion !== activeMotion.current) {
       actions.current[activeMotion.current]?.fadeOut(0.16)
       actions.current[nextMotion]?.reset().setEffectiveWeight(1).fadeIn(0.16).play()
@@ -94,6 +101,9 @@ export function NexusExplorer({ onMove, onInteract, onAbility, abilities = [], i
   const pressedKeys = useRef(new Set<string>())
   const jumpQueued = useRef(false)
   const jump = useRef({ height: 0, velocity: 0, jumps: 0 })
+  const jumpStage = useRef(0)
+  const doubleSpark = useRef<Group>(null)
+  const doubleSparkAge = useRef(10)
   const velocity = useRef<[number, number, number]>([0, 0, 0])
   const pulse = useRef<Group>(null)
   const pulseAge = useRef(10)
@@ -126,8 +136,11 @@ export function NexusExplorer({ onMove, onInteract, onAbility, abilities = [], i
   useFrame(({ clock }, delta) => {
     if (!explorer.current) return
     const nextJump = advanceDoubleJump(jump.current, jumpQueued.current, delta, abilities.includes('mecha'))
-    if (nextJump.didDoubleJump) onAbility?.('jump', [explorer.current.position.x, 0, explorer.current.position.z])
+    if (nextJump.didDoubleJump) { doubleSparkAge.current = 0; onAbility?.('jump', [explorer.current.position.x, 0, explorer.current.position.z]) }
     jump.current = nextJump.state
+    jumpStage.current = jump.current.jumps
+    doubleSparkAge.current += delta
+    if (doubleSpark.current) { doubleSpark.current.visible = doubleSparkAge.current < 0.45; doubleSpark.current.scale.setScalar(0.5 + doubleSparkAge.current * 4) }
     jumpQueued.current = false
     pulseAge.current += delta
     if (pulse.current) {
@@ -165,7 +178,8 @@ export function NexusExplorer({ onMove, onInteract, onAbility, abilities = [], i
     <group ref={explorer} position={initialPosition} scale={1.08}>
       <group position={[0, 0.55, 0]}>
         <group ref={pulse} visible={false} position={[0, 0.7, 0.6]}><mesh><sphereGeometry args={[0.22, 16, 12]} /><meshBasicMaterial color="#66ffd8" /></mesh><pointLight color="#66ffd8" intensity={6} distance={3} /></group>
-        <VrmLumi moving={moving} running={runningMotion} />
+        <VrmLumi moving={moving} running={runningMotion} jumpStage={jumpStage} />
+        <group ref={doubleSpark} visible={false} position={[0, -0.45, 0]} rotation={[-Math.PI / 2, 0, 0]}><mesh><torusGeometry args={[0.55, 0.06, 12, 48]} /><meshBasicMaterial color="#88fff1" transparent opacity={0.85} /></mesh></group>
         <mesh position={[0, -1.48, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.58, 0.67, 40]} /><meshBasicMaterial color="#b486ff" transparent opacity={0.78} /></mesh>
         <pointLight position={[0, 0.35, 0.25]} color="#7cecff" intensity={1.1} distance={3.5} />
         <Text position={[0, 1.9, 0]} fontSize={0.13} color="#d8faff" anchorX="center">LUMI · EXPLORADORA</Text>

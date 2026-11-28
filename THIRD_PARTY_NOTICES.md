@@ -9,6 +9,7 @@
 
 - Source: https://github.com/ekza-space/ekza-studio/tree/main/apps/web/public/library/animations
 - Quaternius Universal Animation Library, converted to VRMA by ekza-studio; CC0 1.0.
+- The same source and license apply to `lumi-jump.vrma` and `lumi-double-jump.vrma`.
 
 ## `public/assets/scifi-helmet/`
 

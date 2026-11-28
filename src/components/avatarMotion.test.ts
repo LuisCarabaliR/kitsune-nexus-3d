@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { selectAvatarMotion } from './avatarMotion'
 
 describe('avatar motion state', () => {
+  it('prioritizes the correct airborne animation over running or celebration', () => {
+    expect(selectAvatarMotion({ moving: true, running: true, celebrating: false, jump: 1 })).toBe('jump')
+    expect(selectAvatarMotion({ moving: true, celebrating: true, jump: 2 })).toBe('doubleJump')
+  })
   it('uses the walking clip only while Lumi is moving', () => {
     expect(selectAvatarMotion({ moving: false, celebrating: false })).toBe('idle')
     expect(selectAvatarMotion({ moving: true, celebrating: false })).toBe('walk')
