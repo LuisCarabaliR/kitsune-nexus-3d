@@ -24,6 +24,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: /Activar núcleo de Ciudad Neón/i }))
     fireEvent.click(screen.getByRole('button', { name: /Activar núcleo de Santuario del Viento/i }))
     fireEvent.click(screen.getByRole('button', { name: /Activar núcleo de Hangar Mecha/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Iniciar desafío central/i }))
     fireEvent.click(screen.getByRole('button', { name: /1 · Ciudad Neón/i }))
     fireEvent.click(screen.getByRole('button', { name: /3 · Hangar Mecha/i }))
     fireEvent.click(screen.getByRole('button', { name: /2 · Santuario del Viento/i }))

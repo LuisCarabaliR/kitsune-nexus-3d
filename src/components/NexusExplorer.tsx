@@ -36,6 +36,9 @@ export function VrmLumi({ moving, running, jumpStage, celebrating = false }: { m
   const mixer = useRef<AnimationMixer | null>(null)
   const actions = useRef<Partial<Record<AvatarMotion, AnimationAction>>>({})
   const activeMotion = useRef<AvatarMotion>('idle')
+  const previousJumpStage = useRef(0)
+  const airTime = useRef(0)
+  const flipTime = useRef(1)
 
   useEffect(() => {
     if (!vrm?.meta || !('metaVersion' in vrm.meta)) return
@@ -58,11 +61,16 @@ export function VrmLumi({ moving, running, jumpStage, celebrating = false }: { m
     const walk = nextMixer.clipAction(createVRMAnimationClip(walkAnimation, vrm)).setLoop(LoopRepeat, Infinity)
     const happy = nextMixer.clipAction(createVRMAnimationClip(happyAnimation, vrm)).setLoop(LoopOnce, 1)
     const run = nextMixer.clipAction(createVRMAnimationClip(runAnimation, vrm)).setLoop(LoopRepeat, Infinity)
-    const jump = nextMixer.clipAction(createVRMAnimationClip(jumpAnimation, vrm)).setLoop(LoopOnce, 1)
-    const doubleJump = nextMixer.clipAction(createVRMAnimationClip(doubleJumpAnimation, vrm)).setLoop(LoopRepeat, Infinity)
+    const jumpClip = createVRMAnimationClip(jumpAnimation, vrm)
+    const airClip = createVRMAnimationClip(doubleJumpAnimation, vrm)
+    jumpClip.tracks = jumpClip.tracks.filter((track) => !track.name.endsWith('.position'))
+    airClip.tracks = airClip.tracks.filter((track) => !track.name.endsWith('.position'))
+    const jump = nextMixer.clipAction(jumpClip).setLoop(LoopOnce, 1)
+    const air = nextMixer.clipAction(airClip).setLoop(LoopRepeat, Infinity)
+    const doubleJump = nextMixer.clipAction(airClip.clone()).setLoop(LoopRepeat, Infinity)
     jump.clampWhenFinished = true
     happy.clampWhenFinished = true
-    actions.current = { idle, walk, run, happy, jump, doubleJump }
+    actions.current = { idle, walk, run, happy, jump, air, doubleJump }
     activeMotion.current = 'idle'
     idle.play()
     mixer.current = nextMixer
@@ -76,7 +84,17 @@ export function VrmLumi({ moving, running, jumpStage, celebrating = false }: { m
 
   useFrame(({ clock }, delta) => {
     if (!vrm) return
-    const nextMotion = selectAvatarMotion({ moving: moving.current, running: running?.current ?? false, jump: jumpStage?.current ?? 0, celebrating })
+    const stage = jumpStage?.current ?? 0
+    if (stage === 1 && previousJumpStage.current === 0) airTime.current = 0
+    if (stage === 2 && previousJumpStage.current !== 2) flipTime.current = 0
+    if (stage > 0) airTime.current += delta
+    flipTime.current += delta
+    previousJumpStage.current = stage
+    if (visual.current) {
+      const progress = Math.min(1, flipTime.current / 0.55)
+      visual.current.rotation.x = stage === 2 && progress < 1 ? -Math.PI * 2 * (progress * progress * (3 - 2 * progress)) : 0
+    }
+    const nextMotion = selectAvatarMotion({ moving: moving.current, running: running?.current ?? false, jump: stage, airTime: airTime.current, celebrating })
     if (nextMotion !== activeMotion.current) {
       actions.current[activeMotion.current]?.fadeOut(0.16)
       actions.current[nextMotion]?.reset().setEffectiveWeight(1).fadeIn(0.16).play()
@@ -88,8 +106,8 @@ export function VrmLumi({ moving, running, jumpStage, celebrating = false }: { m
   })
 
   if (!vrm) return null
-  return <group ref={visual} position={[0, -0.68, 0]} scale={1.42}>
-    <primitive object={vrm.scene} />
+  return <group ref={visual} position={[0, 0.32, 0]} scale={1.42}>
+    <primitive object={vrm.scene} position={[0, -1 / 1.42, 0]} />
   </group>
 }
 

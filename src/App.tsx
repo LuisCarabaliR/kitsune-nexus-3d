@@ -13,6 +13,7 @@ export default function App() {
   const [mode, setMode] = useState<ExperienceMode>('nexus')
   const [mission, setMission] = useState(createMission)
   const [finalChallenge, setFinalChallenge] = useState(createFinalChallenge)
+  const [finalStarted, setFinalStarted] = useState(false)
   const [challengeOpen, setChallengeOpen] = useState(false)
   const [chosenOption, setChosenOption] = useState<number | null>(null)
   const [roomMission, setRoomMission] = useState<RoomMissionState>(() => createMissionState(stations[0].id))
@@ -47,7 +48,7 @@ export default function App() {
           setChosenOption(null)
           setRoomMission(createMissionState(id))
           setMode(enterRoom(id).mode)
-        }} mode={mode} station={selectedStation} activeCoreIds={mission.activeCoreIds} onActivateCore={(id) => setMission((currentMission) => activateCore(currentMission, id))} finalAvailable={progress === 3} finalComplete={finalChallenge.complete} onResonance={(index) => setFinalChallenge((current) => playResonance(current, index))} onReturnToNexus={leaveRoom} missionState={roomMission} onActivateRelic={(relicId) => setRoomMission((current) => activateRelic(current, relicId))} onMissionAnswer={(option) => {
+        }} mode={mode} station={selectedStation} activeCoreIds={mission.activeCoreIds} onActivateCore={(id) => setMission((currentMission) => activateCore(currentMission, id))} finalUnlocked={progress === 3} finalAvailable={progress === 3 && finalStarted} finalComplete={finalChallenge.complete} onStartFinal={() => { if (progress === 3) setFinalStarted(true) }} onResonance={(index) => setFinalChallenge((current) => playResonance(current, index))} onReturnToNexus={leaveRoom} missionState={roomMission} onActivateRelic={(relicId) => setRoomMission((current) => activateRelic(current, relicId))} onMissionAnswer={(option) => {
           const next = answerMission(roomMission, selectedStation, option)
           setChosenOption(option)
           setRoomMission(next)
@@ -72,13 +73,13 @@ export default function App() {
           </div>
           {progress === stations.length && <section aria-label="Prueba final de resonancia">
             <p className="panel-label">PRUEBA FINAL · RESONANCIA CENTRAL</p>
-            {finalChallenge.complete ? <p className="mission-complete" role="status">¡Nexus estabilizado! Lumi sincronizó el núcleo central.</p> : <>
+            {finalChallenge.complete ? <p className="mission-complete" role="status">¡Nexus estabilizado! Lumi sincronizó el núcleo central.</p> : !finalStarted ? <><p>Los tres núcleos están activos. Acércate al núcleo central y pulsa E, o inicia el desafío aquí.</p><button className="room-action" type="button" onClick={() => setFinalStarted(true)}>Iniciar desafío central</button></> : <>
               <p>Sincroniza las plataformas en este orden: 1 · 3 · 2 · 1. En la 1 corre con Shift, en la 3 pulsa Espacio dos veces para hacer doble salto y en la 2 lanza un pulso con Q. También puedes usar E, clic o los botones.</p>
               <p role="status">Secuencia: {finalChallenge.step}/4 · Intentos fallidos: {finalChallenge.mistakes}</p>
               <div className="core-actions">{stations.map((station, index) => <button key={station.id} className="core-action" type="button" onClick={() => setFinalChallenge((current) => playResonance(current, index))}>{index + 1} · {station.name}</button>)}</div>
             </>}
           </section>}
-          {exploredCount > 0 && <button className="room-action secondary reset-action" type="button" onClick={() => { clearExplorationProgress(window.localStorage); setExploration(createExplorationProgress()); setMission(createMission()); setFinalChallenge(createFinalChallenge()) }}>Reiniciar</button>}
+          {exploredCount > 0 && <button className="room-action secondary reset-action" type="button" onClick={() => { clearExplorationProgress(window.localStorage); setExploration(createExplorationProgress()); setMission(createMission()); setFinalChallenge(createFinalChallenge()); setFinalStarted(false) }}>Reiniciar</button>}
         </section>
         <aside className="station-panel" aria-live="polite">
           <p className="panel-label">{mode === 'room' ? 'SALA ACTIVA' : 'ESTACIÓN SELECCIONADA'}</p>

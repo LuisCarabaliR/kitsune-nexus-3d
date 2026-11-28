@@ -23,7 +23,9 @@ type NexusSceneProps = {
   onMissionAnswer?: (option: number) => void
   onActivateRelic?: (relicId: number) => void
   finalAvailable?: boolean
+  finalUnlocked?: boolean
   finalComplete?: boolean
+  onStartFinal?: () => void
   onResonance?: (index: number) => void
 }
 
@@ -40,12 +42,14 @@ type NexusPlazaProps = {
   onActivateCore: (id: Station['id']) => void
   onSelect: (id: Station['id']) => void
   finalAvailable: boolean
+  finalUnlocked: boolean
   finalComplete: boolean
+  onStartFinal: () => void
   onResonance: (index: number) => void
 }
 
 const resonancePositions: [number, number, number][] = [[-3.5, -0.9, 2], [0, -0.9, 4.2], [3.5, -0.9, 2]]
-function NexusPlaza({ activeCoreIds, onActivateCore, onSelect, finalAvailable, finalComplete, onResonance }: NexusPlazaProps) {
+function NexusPlaza({ activeCoreIds, onActivateCore, onSelect, finalAvailable, finalUnlocked, finalComplete, onStartFinal, onResonance }: NexusPlazaProps) {
   const stabilized = finalComplete
   const enteredPortal = useRef<Station['id'] | null>(null)
   const runPad = useRef(false)
@@ -113,10 +117,11 @@ function NexusPlaza({ activeCoreIds, onActivateCore, onSelect, finalAvailable, f
         <Text position={[districtX, -0.55, districtZ + 3.55]} fontSize={0.22} color={station.theme.secondary} anchorX="center">{station.name.toUpperCase()} · DISTRITO</Text>
       </group>
     })}
-    <group position={[0, 0.1, 0]}>
+    <group position={[0, 0.1, 0]} onClick={(event) => { event.stopPropagation(); if (finalUnlocked && !finalComplete) onStartFinal() }}>
       <mesh><icosahedronGeometry args={[1.25, 2]} /><meshStandardMaterial color={stabilized ? '#a1ffe5' : '#c077ff'} emissive={stabilized ? '#4dffd0' : '#7d45ef'} emissiveIntensity={2.3} metalness={0.78} roughness={0.14} /></mesh>
       <mesh rotation={[Math.PI / 2.8, 0, 0]}><torusGeometry args={[1.8, 0.055, 12, 88]} /><meshBasicMaterial color={stabilized ? '#77ffe1' : '#a175ff'} /></mesh>
       <mesh rotation={[0, Math.PI / 2.8, Math.PI / 2]}><torusGeometry args={[2.18, 0.035, 12, 88]} /><meshBasicMaterial color="#7cecff" transparent opacity={0.7} /></mesh>
+      {finalUnlocked && !finalComplete && <Text position={[0, 2.25, 0]} fontSize={0.24} color="#ffffff" anchorX="center">{finalAvailable ? 'DESAFÍO CENTRAL ACTIVO' : 'NÚCLEO CENTRAL · E PARA INICIAR'}</Text>}
     </group>
     {stations.map((item) => <NexusEnergyCore key={`core-${item.id}`} station={item} position={corePositions[item.id]} active={activeCoreIds.includes(item.id)} onActivate={onActivateCore} />)}
     {stations.map((item) => <NexusPortal key={item.id} station={item} unlocked onSelect={onSelect} />)}
@@ -133,6 +138,7 @@ function NexusPlaza({ activeCoreIds, onActivateCore, onSelect, finalAvailable, f
       if (ability === 'run') { if (runPad.current) return; runPad.current = true }
       onResonance(index)
     }} onInteract={(position) => {
+      if (finalUnlocked && !finalAvailable && Math.hypot(position[0], position[2]) < 2.8) { onStartFinal(); return }
       if (!finalAvailable) return
       const index = resonancePositions.findIndex(([x, , z]) => Math.hypot(position[0] - x, position[2] - z) < 1.25)
       if (index >= 0) onResonance(index)
@@ -140,12 +146,12 @@ function NexusPlaza({ activeCoreIds, onActivateCore, onSelect, finalAvailable, f
   </>
 }
 
-export function NexusScene({ onSelect, mode = 'nexus', station = stations[0], activeCoreIds = [], onActivateCore = () => {}, onReturnToNexus = () => {}, missionState, onMissionAnswer = () => {}, onActivateRelic = () => {}, finalAvailable = false, finalComplete = false, onResonance = () => {} }: NexusSceneProps) {
+export function NexusScene({ onSelect, mode = 'nexus', station = stations[0], activeCoreIds = [], onActivateCore = () => {}, onReturnToNexus = () => {}, missionState, onMissionAnswer = () => {}, onActivateRelic = () => {}, finalAvailable = false, finalUnlocked = false, finalComplete = false, onStartFinal = () => {}, onResonance = () => {} }: NexusSceneProps) {
   return (
     <div className="nexus-canvas" role="img" aria-label="Escena 3D del Nexus Central con tres portales explorables">
       <Canvas camera={{ position: initialPlazaCamera.position, fov: 54 }} shadows dpr={[1, 1.5]}>
         <Suspense fallback={null}>
-          {mode === 'room' ? <NexusRoom station={station} onReturn={onReturnToNexus} missionState={missionState} onMissionAnswer={onMissionAnswer} onActivateRelic={onActivateRelic} /> : <NexusPlaza activeCoreIds={activeCoreIds} onActivateCore={onActivateCore} onSelect={onSelect} finalAvailable={finalAvailable} finalComplete={finalComplete} onResonance={onResonance} />}
+          {mode === 'room' ? <NexusRoom station={station} onReturn={onReturnToNexus} missionState={missionState} onMissionAnswer={onMissionAnswer} onActivateRelic={onActivateRelic} /> : <NexusPlaza activeCoreIds={activeCoreIds} onActivateCore={onActivateCore} onSelect={onSelect} finalAvailable={finalAvailable} finalUnlocked={finalUnlocked} finalComplete={finalComplete} onStartFinal={onStartFinal} onResonance={onResonance} />}
         </Suspense>
         <OrbitControls
           makeDefault
