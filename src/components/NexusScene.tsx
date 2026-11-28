@@ -122,7 +122,7 @@ function NexusPlaza({ activeCoreIds, onActivateCore, onSelect, finalAvailable, f
     {stations.map((item) => <NexusPortal key={item.id} station={item} unlocked onSelect={onSelect} />)}
     {finalAvailable && resonancePositions.map(([x, y, z], index) => <group key={index} position={[x, y, z]} onClick={(event) => { event.stopPropagation(); onResonance(index) }}>
       <mesh><cylinderGeometry args={[0.72, 0.72, 0.16, 32]} /><meshStandardMaterial color={stations[index].theme.primary} emissive={stations[index].theme.primary} emissiveIntensity={1.8} /></mesh>
-      <Text position={[0, 0.8, 0]} fontSize={0.22} color="#ffffff" anchorX="center">{['1 · CORRER', '2 · PULSO Q', '3 · SALTAR'][index]}</Text>
+      <Text position={[0, 0.8, 0]} fontSize={0.22} color="#ffffff" anchorX="center">{['1 · CORRER', '2 · PULSO Q', '3 · DOBLE SALTO'][index]}</Text>
     </group>)}
     <Text position={[0, 0.55, -2.8]} fontSize={0.22} color="#d8d1ff" anchorX="center">PLAZA CENTRAL · ELIGE UN DISTRITO</Text>
     <Suspense fallback={null}><NexusExplorer initialPosition={plazaExplorerStart} abilities={activeCoreIds} onMove={(position) => { if (Math.hypot(position[0] - resonancePositions[0][0], position[2] - resonancePositions[0][2]) >= 1.3) runPad.current = false; handleExplorerMove(position) }} onAbility={(ability, position) => {

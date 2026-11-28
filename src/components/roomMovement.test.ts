@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { advanceJump, moveExplorer, moveRoomExplorer, smoothTurn, smoothVelocity } from './roomMovement'
+import { advanceDoubleJump, advanceJump, moveExplorer, moveRoomExplorer, smoothTurn, smoothVelocity } from './roomMovement'
 
 describe('expanded Nexus movement', () => {
+  it('allows one extra jump only when unlocked and restores jumps on landing', () => {
+    const first = advanceDoubleJump({ height: 0, velocity: 0, jumps: 0 }, true, 0.05, true)
+    const second = advanceDoubleJump(first.state, true, 0.05, true)
+    expect(second.didDoubleJump).toBe(true)
+    expect(advanceDoubleJump(second.state, true, 0.05, true).didDoubleJump).toBe(false)
+    expect(advanceDoubleJump(first.state, true, 0.05, false).didDoubleJump).toBe(false)
+    expect(advanceDoubleJump({ height: 0.01, velocity: -4, jumps: 2 }, false, 0.1, true).state.jumps).toBe(0)
+  })
   it('launches a higher jump when the Mecha ability is unlocked', () => {
     const initial = { height: 0, velocity: 0 }
     expect(advanceJump(initial, true, 0.1, true).height).toBeGreaterThan(advanceJump(initial, true, 0.1).height)

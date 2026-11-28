@@ -6,7 +6,7 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { VRMLoaderPlugin, VRMUtils, type VRM } from '@pixiv/three-vrm'
 import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation'
-import { advanceJump, moveExplorer, movementFromKeys, smoothTurn, smoothVelocity } from './roomMovement'
+import { advanceDoubleJump, moveExplorer, movementFromKeys, smoothTurn, smoothVelocity } from './roomMovement'
 import { needsVrm0Rotation } from './vrmOrientation'
 import { selectAvatarMotion, type AvatarMotion } from './avatarMotion'
 
@@ -93,7 +93,7 @@ export function NexusExplorer({ onMove, onInteract, onAbility, abilities = [], i
   const runningMotion = useRef(false)
   const pressedKeys = useRef(new Set<string>())
   const jumpQueued = useRef(false)
-  const jump = useRef({ height: 0, velocity: 0 })
+  const jump = useRef({ height: 0, velocity: 0, jumps: 0 })
   const velocity = useRef<[number, number, number]>([0, 0, 0])
   const pulse = useRef<Group>(null)
   const pulseAge = useRef(10)
@@ -125,9 +125,9 @@ export function NexusExplorer({ onMove, onInteract, onAbility, abilities = [], i
 
   useFrame(({ clock }, delta) => {
     if (!explorer.current) return
-    const launched = jumpQueued.current && jump.current.height === 0
-    if (launched && abilities.includes('mecha')) onAbility?.('jump', [explorer.current.position.x, 0, explorer.current.position.z])
-    jump.current = advanceJump(jump.current, jumpQueued.current, delta, abilities.includes('mecha'))
+    const nextJump = advanceDoubleJump(jump.current, jumpQueued.current, delta, abilities.includes('mecha'))
+    if (nextJump.didDoubleJump) onAbility?.('jump', [explorer.current.position.x, 0, explorer.current.position.z])
+    jump.current = nextJump.state
     jumpQueued.current = false
     pulseAge.current += delta
     if (pulse.current) {

@@ -263,15 +263,15 @@ export function NexusRoom({ station, onReturn, missionState, onMissionAnswer, on
     <group>
       <RoomNavigator station={station} missionActive={missionActive} missionReady={missionReady} celebrating={missionState?.phase === 'success'} onMissionAnswer={onMissionAnswer} onActivateRelic={onActivateRelic} onReturn={onReturn} />
       <color attach="background" args={['#070512']} />
-      <fog attach="fog" args={['#070512', 18, 48]} />
+      <fog attach="fog" args={['#070512', 28, 75]} />
       <hemisphereLight args={['#bdc9ff', '#09020f', 1.05]} />
       <ambientLight intensity={0.18} />
       <directionalLight position={[4, 7, 5]} intensity={2.35} color="#dcd5ff" castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} shadow-camera-far={30} />
       <pointLight position={[0, 2, 0]} color={station.theme.primary} intensity={20} distance={14} />
       <pointLight position={[-4, 1, -3]} color={station.theme.secondary} intensity={12} distance={9} />
-      <Sparkles count={240} scale={[15, 8, 15]} size={2.1} speed={0.35} color={station.theme.secondary} />
+      <Sparkles count={320} scale={[35, 10, 35]} size={2.1} speed={0.35} color={station.theme.secondary} />
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.45, 0]} receiveShadow>
-        <circleGeometry args={[20, 144]} />
+        <circleGeometry args={[28, 144]} />
         <meshPhysicalMaterial color="#10092b" metalness={0.78} roughness={0.27} clearcoat={0.26} clearcoatRoughness={0.28} />
       </mesh>
       <ContactShadows position={[0, -1.4, 0]} opacity={0.48} scale={20} blur={2.2} far={8} color="#09020f" />
@@ -290,8 +290,8 @@ export function NexusRoom({ station, onReturn, missionState, onMissionAnswer, on
         </mesh>
       </Float>
       <RoomArchitecture station={station} />
-      <StationLandscape station={station} />
-      <WorldScenery station={station} />
+      <group position={[0, 1.015, 0]} scale={1.7}><StationLandscape station={station} /></group>
+      <group position={[0, 0.5075, 0]} scale={1.35}><WorldScenery station={station} /></group>
       {missionActive && <MissionRelics station={station} activatedRelicIds={missionState?.activatedRelicIds ?? []} onActivateRelic={onActivateRelic} />}
       {missionReady && <MissionCourse station={station} />}
       {missionReady && <group position={[0, -0.32, 2.65]}>
