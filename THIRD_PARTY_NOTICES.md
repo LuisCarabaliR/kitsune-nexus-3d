@@ -1,5 +1,11 @@
 # Third-party asset notice
 
+## `public/assets/scifi-helmet/`
+
+- SciFi Helmet, by Michael Pavlovic; glTF conversion by Norbert Nopper.
+- Source: https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/SciFiHelmet
+- License: CC0 1.0 Universal.
+
 ## `public/assets/lumi-hero.vrm`
 
 - Source: https://github.com/josephrocca/ChatVRM-js/blob/main/avatars/AvatarSample_B.vrm

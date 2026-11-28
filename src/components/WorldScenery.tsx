@@ -1,4 +1,5 @@
-import { Float, Text } from '@react-three/drei'
+import { Float, Text, useGLTF } from '@react-three/drei'
+import { Suspense } from 'react'
 import type { Station } from '../data/stations'
 
 function City() {
@@ -45,12 +46,17 @@ function Hangar() {
       <mesh position={[0, 0.55, 4]}><boxGeometry args={[2.3, 1.1, 1.6]} /><meshStandardMaterial color="#58626b" metalness={0.8} roughness={0.5} /></mesh>
       <mesh position={[0, 0.55, 4.81]}><boxGeometry args={[1.65, 0.14, 0.03]} /><meshBasicMaterial color="#ffc55c" /></mesh>
     </group>)}
-    <group position={[0, 3.3, -13]}>
-      <mesh><boxGeometry args={[5.2, 1.2, 1.8]} /><meshStandardMaterial color="#526172" metalness={0.9} roughness={0.3} /></mesh>
-      <mesh position={[0, 0.55, -0.2]}><coneGeometry args={[1.1, 2.4, 5]} /><meshStandardMaterial color="#8796a8" metalness={0.85} roughness={0.25} /></mesh>
-      {[-1, 1].map((side) => <mesh key={side} position={[side * 3.3, -0.3, 0]} rotation={[0, 0, side * 0.15]}><boxGeometry args={[2.5, 0.2, 2.7]} /><meshStandardMaterial color="#374a60" metalness={0.9} roughness={0.3} /></mesh>)}
-      <Text position={[0, -1.4, 1]} fontSize={0.27} color="#ffc46b" anchorX="center">NAVE DE EXPLORACIÓN</Text>
-    </group>
+    <Suspense fallback={null}><HelmetExhibit /></Suspense>
+  </group>
+}
+
+function HelmetExhibit() {
+  const model = useGLTF(`${import.meta.env.BASE_URL}assets/scifi-helmet/SciFiHelmet.gltf`)
+  return <group position={[0, 1.2, -11]}>
+    <mesh position={[0, -1.7, 0]}><cylinderGeometry args={[2.5, 2.8, 0.3, 48]} /><meshStandardMaterial color="#303c4a" metalness={0.85} roughness={0.35} /></mesh>
+    <primitive object={model.scene} scale={1.15} />
+    <pointLight position={[1, 2, 3]} intensity={20} distance={9} color="#ffc677" />
+    <Text position={[0, -1.3, 2]} fontSize={0.24} color="#ffc46b" anchorX="center">CASCO DE EXPLORACIÓN</Text>
   </group>
 }
 
