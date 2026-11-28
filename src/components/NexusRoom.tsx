@@ -8,6 +8,7 @@ import { VrmLumi } from './NexusExplorer'
 import { advanceJump, moveRoomExplorer, movementFromKeys, smoothTurn, smoothVelocity } from './roomMovement'
 import { isMissionReady, missionGateAtPosition, missionRelicPositions, relicAtPosition, selectGateOnJump, type RoomMissionState } from './nexusExploration'
 import { MissionCourse } from './missionCourse'
+import { WorldScenery } from './WorldScenery'
 
 type NexusRoomProps = {
   station: Station
@@ -260,7 +261,7 @@ export function NexusRoom({ station, onReturn, missionState, onMissionAnswer, on
     <group>
       <RoomNavigator station={station} missionActive={missionActive} missionReady={missionReady} celebrating={missionState?.phase === 'success'} onMissionAnswer={onMissionAnswer} onActivateRelic={onActivateRelic} onReturn={onReturn} />
       <color attach="background" args={['#070512']} />
-      <fog attach="fog" args={['#070512', 9, 26]} />
+      <fog attach="fog" args={['#070512', 18, 48]} />
       <hemisphereLight args={['#bdc9ff', '#09020f', 1.05]} />
       <ambientLight intensity={0.18} />
       <directionalLight position={[4, 7, 5]} intensity={2.35} color="#dcd5ff" castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} shadow-camera-far={30} />
@@ -268,7 +269,7 @@ export function NexusRoom({ station, onReturn, missionState, onMissionAnswer, on
       <pointLight position={[-4, 1, -3]} color={station.theme.secondary} intensity={12} distance={9} />
       <Sparkles count={240} scale={[15, 8, 15]} size={2.1} speed={0.35} color={station.theme.secondary} />
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.45, 0]} receiveShadow>
-        <circleGeometry args={[12, 112]} />
+        <circleGeometry args={[20, 144]} />
         <meshPhysicalMaterial color="#10092b" metalness={0.78} roughness={0.27} clearcoat={0.26} clearcoatRoughness={0.28} />
       </mesh>
       <ContactShadows position={[0, -1.4, 0]} opacity={0.48} scale={20} blur={2.2} far={8} color="#09020f" />
@@ -288,6 +289,7 @@ export function NexusRoom({ station, onReturn, missionState, onMissionAnswer, on
       </Float>
       <RoomArchitecture station={station} />
       <StationLandscape station={station} />
+      <WorldScenery station={station} />
       {missionActive && <MissionRelics station={station} activatedRelicIds={missionState?.activatedRelicIds ?? []} onActivateRelic={onActivateRelic} />}
       {missionReady && <MissionCourse station={station} />}
       {missionReady && <group position={[0, -0.32, 2.65]}>

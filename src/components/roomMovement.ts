@@ -49,9 +49,9 @@ export function moveExplorer(position: ExplorerPosition, direction: MovementVect
 
 export function moveRoomExplorer(room: RoomId, position: ExplorerPosition, direction: MovementVector, distance: number): ExplorerPosition {
   const next: ExplorerPosition = [
-    Math.max(-9.2, Math.min(9.2, position[0] + direction[0] * distance)),
+    Math.max(-13, Math.min(13, position[0] + direction[0] * distance)),
     0,
-    Math.max(-8.5, Math.min(9.5, position[2] + direction[2] * distance)),
+    Math.max(-12, Math.min(12, position[2] + direction[2] * distance)),
   ]
   const hitsStructure = roomObstacles[room].some(([x, z, radius]) => Math.hypot(next[0] - x, next[2] - z) < radius)
   return hitsStructure ? position : next
