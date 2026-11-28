@@ -22,6 +22,9 @@ type NexusSceneProps = {
   missionState?: RoomMissionState
   onMissionAnswer?: (option: number) => void
   onActivateRelic?: (relicId: number) => void
+  finalAvailable?: boolean
+  finalComplete?: boolean
+  onResonance?: (index: number) => void
 }
 
 const corePositions: Record<Station['id'], [number, number, number]> = {
@@ -36,10 +39,14 @@ type NexusPlazaProps = {
   activeCoreIds: readonly Station['id'][]
   onActivateCore: (id: Station['id']) => void
   onSelect: (id: Station['id']) => void
+  finalAvailable: boolean
+  finalComplete: boolean
+  onResonance: (index: number) => void
 }
 
-function NexusPlaza({ activeCoreIds, onActivateCore, onSelect }: NexusPlazaProps) {
-  const stabilized = activeCoreIds.length === stations.length
+const resonancePositions: [number, number, number][] = [[-3.5, -0.9, 2], [0, -0.9, 4.2], [3.5, -0.9, 2]]
+function NexusPlaza({ activeCoreIds, onActivateCore, onSelect, finalAvailable, finalComplete, onResonance }: NexusPlazaProps) {
+  const stabilized = finalComplete
   const enteredPortal = useRef<Station['id'] | null>(null)
 
   const handleExplorerMove = (position: [number, number, number]) => {
@@ -112,17 +119,25 @@ function NexusPlaza({ activeCoreIds, onActivateCore, onSelect }: NexusPlazaProps
     </group>
     {stations.map((item) => <NexusEnergyCore key={`core-${item.id}`} station={item} position={corePositions[item.id]} active={activeCoreIds.includes(item.id)} onActivate={onActivateCore} />)}
     {stations.map((item) => <NexusPortal key={item.id} station={item} unlocked onSelect={onSelect} />)}
+    {finalAvailable && resonancePositions.map(([x, y, z], index) => <group key={index} position={[x, y, z]} onClick={(event) => { event.stopPropagation(); onResonance(index) }}>
+      <mesh><cylinderGeometry args={[0.72, 0.72, 0.16, 32]} /><meshStandardMaterial color={stations[index].theme.primary} emissive={stations[index].theme.primary} emissiveIntensity={1.8} /></mesh>
+      <Text position={[0, 0.8, 0]} fontSize={0.3} color="#ffffff" anchorX="center">{index + 1}</Text>
+    </group>)}
     <Text position={[0, 0.55, -2.8]} fontSize={0.22} color="#d8d1ff" anchorX="center">PLAZA CENTRAL · ELIGE UN DISTRITO</Text>
-    <Suspense fallback={null}><NexusExplorer initialPosition={plazaExplorerStart} onMove={handleExplorerMove} /></Suspense>
+    <Suspense fallback={null}><NexusExplorer initialPosition={plazaExplorerStart} onMove={handleExplorerMove} onInteract={(position) => {
+      if (!finalAvailable) return
+      const index = resonancePositions.findIndex(([x, , z]) => Math.hypot(position[0] - x, position[2] - z) < 1.25)
+      if (index >= 0) onResonance(index)
+    }} /></Suspense>
   </>
 }
 
-export function NexusScene({ onSelect, mode = 'nexus', station = stations[0], activeCoreIds = [], onActivateCore = () => {}, onReturnToNexus = () => {}, missionState, onMissionAnswer = () => {}, onActivateRelic = () => {} }: NexusSceneProps) {
+export function NexusScene({ onSelect, mode = 'nexus', station = stations[0], activeCoreIds = [], onActivateCore = () => {}, onReturnToNexus = () => {}, missionState, onMissionAnswer = () => {}, onActivateRelic = () => {}, finalAvailable = false, finalComplete = false, onResonance = () => {} }: NexusSceneProps) {
   return (
     <div className="nexus-canvas" role="img" aria-label="Escena 3D del Nexus Central con tres portales explorables">
       <Canvas camera={{ position: initialPlazaCamera.position, fov: 54 }} shadows dpr={[1, 1.5]}>
         <Suspense fallback={null}>
-          {mode === 'room' ? <NexusRoom station={station} onReturn={onReturnToNexus} missionState={missionState} onMissionAnswer={onMissionAnswer} onActivateRelic={onActivateRelic} /> : <NexusPlaza activeCoreIds={activeCoreIds} onActivateCore={onActivateCore} onSelect={onSelect} />}
+          {mode === 'room' ? <NexusRoom station={station} onReturn={onReturnToNexus} missionState={missionState} onMissionAnswer={onMissionAnswer} onActivateRelic={onActivateRelic} /> : <NexusPlaza activeCoreIds={activeCoreIds} onActivateCore={onActivateCore} onSelect={onSelect} finalAvailable={finalAvailable} finalComplete={finalComplete} onResonance={onResonance} />}
         </Suspense>
         <OrbitControls
           makeDefault

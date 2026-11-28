@@ -19,6 +19,17 @@ vi.mock('./components/NexusScene', () => ({
 import App from './App'
 
 describe('App', () => {
+  it('unlocks and completes the final challenge using the exterior core shortcuts', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: /Activar núcleo de Ciudad Neón/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Activar núcleo de Santuario del Viento/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Activar núcleo de Hangar Mecha/i }))
+    fireEvent.click(screen.getByRole('button', { name: /1 · Ciudad Neón/i }))
+    fireEvent.click(screen.getByRole('button', { name: /3 · Hangar Mecha/i }))
+    fireEvent.click(screen.getByRole('button', { name: /2 · Santuario del Viento/i }))
+    fireEvent.click(screen.getByRole('button', { name: /1 · Ciudad Neón/i }))
+    expect(screen.getByText(/Lumi sincronizó el núcleo central/i)).toBeInTheDocument()
+  })
   it('shows the three station names and a selected station panel', () => {
     render(<App />)
 

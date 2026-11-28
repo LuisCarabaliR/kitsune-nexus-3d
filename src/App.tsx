@@ -5,12 +5,14 @@ import { enterRoom, returnToNexus, type ExperienceMode } from './components/nexu
 import { activateCore, createMission, isPortalUnlocked, missionProgress } from './components/nexusMission'
 import { activateRelic, answerMission, createExplorationProgress, createMissionState, isMissionReady, relicProgress, explorationCount, exploreStation, startMission, type RoomMissionState } from './components/nexusExploration'
 import { clearExplorationProgress, loadExplorationProgress, saveExplorationProgress } from './components/nexusProgressStorage'
+import { createFinalChallenge, playResonance } from './components/finalChallenge'
 import './styles.css'
 
 export default function App() {
   const [selectedId, setSelectedId] = useState(stations[0].id)
   const [mode, setMode] = useState<ExperienceMode>('nexus')
   const [mission, setMission] = useState(createMission)
+  const [finalChallenge, setFinalChallenge] = useState(createFinalChallenge)
   const [challengeOpen, setChallengeOpen] = useState(false)
   const [chosenOption, setChosenOption] = useState<number | null>(null)
   const [roomMission, setRoomMission] = useState<RoomMissionState>(() => createMissionState(stations[0].id))
@@ -45,11 +47,11 @@ export default function App() {
           setChosenOption(null)
           setRoomMission(createMissionState(id))
           setMode(enterRoom(id).mode)
-        }} mode={mode} station={selectedStation} activeCoreIds={mission.activeCoreIds} onActivateCore={(id) => setMission((currentMission) => activateCore(currentMission, id))} onReturnToNexus={leaveRoom} missionState={roomMission} onActivateRelic={(relicId) => setRoomMission((current) => activateRelic(current, relicId))} onMissionAnswer={(option) => {
+        }} mode={mode} station={selectedStation} activeCoreIds={mission.activeCoreIds} onActivateCore={(id) => setMission((currentMission) => activateCore(currentMission, id))} finalAvailable={progress === 3} finalComplete={finalChallenge.complete} onResonance={(index) => setFinalChallenge((current) => playResonance(current, index))} onReturnToNexus={leaveRoom} missionState={roomMission} onActivateRelic={(relicId) => setRoomMission((current) => activateRelic(current, relicId))} onMissionAnswer={(option) => {
           const next = answerMission(roomMission, selectedStation, option)
           setChosenOption(option)
           setRoomMission(next)
-          if (next.phase === 'success') setExploration((current) => exploreStation(current, selectedStation.id))
+          if (next.phase === 'success') { setExploration((current) => exploreStation(current, selectedStation.id)); setMission((current) => activateCore(current, selectedStation.id)) }
         }} />
         <header className="game-hud" aria-labelledby="page-title">
           <p className="eyebrow">NEXUS CENTRAL · EXPERIENCIA WEB 3D</p>
@@ -67,8 +69,15 @@ export default function App() {
               </button>
             })}
           </div>
-          {progress === stations.length && <p className="mission-complete" role="status">Nexus estabilizado.</p>}
-          {exploredCount > 0 && <button className="room-action secondary reset-action" type="button" onClick={() => { clearExplorationProgress(window.localStorage); setExploration(createExplorationProgress()) }}>Reiniciar</button>}
+          {progress === stations.length && <section aria-label="Prueba final de resonancia">
+            <p className="panel-label">PRUEBA FINAL · RESONANCIA CENTRAL</p>
+            {finalChallenge.complete ? <p className="mission-complete" role="status">¡Nexus estabilizado! Lumi sincronizó el núcleo central.</p> : <>
+              <p>Sincroniza los cristales en este orden: 1 · 3 · 2 · 1. Acerca a Lumi y pulsa E, haz clic en los cristales de la plaza o usa los botones.</p>
+              <p role="status">Secuencia: {finalChallenge.step}/4 · Intentos fallidos: {finalChallenge.mistakes}</p>
+              <div className="core-actions">{stations.map((station, index) => <button key={station.id} className="core-action" type="button" onClick={() => setFinalChallenge((current) => playResonance(current, index))}>{index + 1} · {station.name}</button>)}</div>
+            </>}
+          </section>}
+          {exploredCount > 0 && <button className="room-action secondary reset-action" type="button" onClick={() => { clearExplorationProgress(window.localStorage); setExploration(createExplorationProgress()); setMission(createMission()); setFinalChallenge(createFinalChallenge()) }}>Reiniciar</button>}
         </section>
         <aside className="station-panel" aria-live="polite">
           <p className="panel-label">{mode === 'room' ? 'SALA ACTIVA' : 'ESTACIÓN SELECCIONADA'}</p>
@@ -100,7 +109,7 @@ export default function App() {
                 {selectedStation.room.challenge.options.map((option, index) => <button className="core-action" type="button" key={option} onClick={() => {
                   const next = answerMission(roomMission, selectedStation, index)
                   setRoomMission(next)
-                  if (next.phase === 'success') setExploration((current) => exploreStation(current, selectedStation.id))
+                  if (next.phase === 'success') { setExploration((current) => exploreStation(current, selectedStation.id)); setMission((current) => activateCore(current, selectedStation.id)) }
                 }}>{option}</button>)}
               </div>}
               <p className="mission-progress">Fallas de estabilidad: {roomMission.failures}/2</p>

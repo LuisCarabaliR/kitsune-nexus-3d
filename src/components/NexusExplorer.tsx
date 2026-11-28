@@ -13,6 +13,7 @@ import { selectAvatarMotion, type AvatarMotion } from './avatarMotion'
 type NexusExplorerProps = {
   onMove?: (position: [number, number, number]) => void
   initialPosition?: [number, number, number]
+  onInteract?: (position: [number, number, number]) => void
 }
 
 const avatarUrl = `${import.meta.env.BASE_URL}assets/lumi-hero.vrm`
@@ -80,7 +81,7 @@ export function VrmLumi({ moving, celebrating = false }: { moving: MutableRefObj
   </group>
 }
 
-export function NexusExplorer({ onMove, initialPosition = [0, -0.7, 4.8] }: NexusExplorerProps) {
+export function NexusExplorer({ onMove, onInteract, initialPosition = [0, -0.7, 4.8] }: NexusExplorerProps) {
   const { camera, controls } = useThree()
   const explorer = useRef<Group>(null)
   const moving = useRef(false)
@@ -95,6 +96,7 @@ export function NexusExplorer({ onMove, initialPosition = [0, -0.7, 4.8] }: Nexu
         event.preventDefault()
         if (!event.repeat) jumpQueued.current = true
       }
+      if (event.code === 'KeyE' && !event.repeat && explorer.current) onInteract?.([explorer.current.position.x, 0, explorer.current.position.z])
       pressedKeys.current.add(event.code)
     }
     const onKeyUp = (event: KeyboardEvent) => {
@@ -107,7 +109,7 @@ export function NexusExplorer({ onMove, initialPosition = [0, -0.7, 4.8] }: Nexu
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
     }
-  }, [])
+  }, [onInteract])
 
   useFrame(({ clock }, delta) => {
     if (!explorer.current) return
