@@ -1,5 +1,15 @@
 # Third-party asset notice
 
+## `public/assets/lantern.glb`
+
+- Lantern: https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/Lantern
+- License: CC0 1.0 Universal; see the upstream model metadata for credits.
+
+## `public/assets/animations/lumi-run.vrma`
+
+- Source: https://github.com/ekza-space/ekza-studio/tree/main/apps/web/public/library/animations
+- Quaternius Universal Animation Library, converted to VRMA by ekza-studio; CC0 1.0.
+
 ## `public/assets/scifi-helmet/`
 
 - SciFi Helmet, by Michael Pavlovic; glTF conversion by Norbert Nopper.

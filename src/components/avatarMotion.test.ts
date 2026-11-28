@@ -7,6 +7,11 @@ describe('avatar motion state', () => {
     expect(selectAvatarMotion({ moving: true, celebrating: false })).toBe('walk')
   })
 
+  it('switches to the running clip only while moving and running', () => {
+    expect(selectAvatarMotion({ moving: true, running: true, celebrating: false })).toBe('run')
+    expect(selectAvatarMotion({ moving: false, running: true, celebrating: false })).toBe('idle')
+  })
+
   it('keeps Lumi walking after a completed mission when the player moves', () => {
     expect(selectAvatarMotion({ moving: true, celebrating: true })).toBe('walk')
     expect(selectAvatarMotion({ moving: false, celebrating: true })).toBe('happy')

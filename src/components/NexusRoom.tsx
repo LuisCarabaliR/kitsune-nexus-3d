@@ -2,7 +2,8 @@ import { ContactShadows, Float, Sparkles, Text } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
 import { useThree } from '@react-three/fiber'
-import { Vector3, type Group } from 'three'
+import type { Group } from 'three'
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import type { Station } from '../data/stations'
 import { VrmLumi } from './NexusExplorer'
 import { advanceJump, moveRoomExplorer, movementFromKeys, smoothTurn, smoothVelocity } from './roomMovement'
@@ -27,11 +28,14 @@ function RoomNavigator({ station, missionActive, missionReady, celebrating, onMi
   const interactQueued = useRef(false)
   const explorer = useRef<Group>(null)
   const returning = useRef(false)
-  const { camera } = useThree()
+  const { camera, controls } = useThree()
 
   useEffect(() => {
     camera.position.set(0, 2.5, 9)
     camera.lookAt(0, 0.35, 1)
+  }, [camera])
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.code === 'Space') {
         event.preventDefault()
@@ -53,7 +57,7 @@ function RoomNavigator({ station, missionActive, missionReady, celebrating, onMi
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
     }
-  }, [camera, missionActive])
+  }, [missionActive])
 
   useFrame((_, delta) => {
     if (!explorer.current) return
@@ -67,6 +71,10 @@ function RoomNavigator({ station, missionActive, missionReady, celebrating, onMi
     explorer.current.position.y = -0.7 + jump.current.height
     if (moving.current) {
       const next = moveRoomExplorer(station.id, [explorer.current.position.x, 0, explorer.current.position.z], velocity.current, delta)
+      const dx = next[0] - explorer.current.position.x
+      const dz = next[2] - explorer.current.position.z
+      const orbit = controls as OrbitControlsImpl | null
+      if (orbit) { orbit.target.x += dx; orbit.target.z += dz; camera.position.x += dx; camera.position.z += dz }
       explorer.current.position.x = next[0]
       explorer.current.position.z = next[2]
       if (!returning.current && Math.hypot(next[0], next[2] - 8) < 0.9) {
@@ -89,12 +97,6 @@ function RoomNavigator({ station, missionActive, missionReady, celebrating, onMi
     if (missionReady) {
       const selectedGate = selectGateOnJump([explorer.current.position.x, 0, explorer.current.position.z], jumped)
       if (selectedGate !== null) onMissionAnswer(selectedGate)
-    }
-    if (moving.current) {
-      const focus = explorer.current.position.clone().add(new Vector3(0, 0.65, 0))
-      const desiredCamera = explorer.current.position.clone().add(new Vector3(0, 2.45, 6.35))
-      camera.position.lerp(desiredCamera, Math.min(1, delta * 3.15))
-      camera.lookAt(focus)
     }
   })
 

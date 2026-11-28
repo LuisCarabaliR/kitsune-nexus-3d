@@ -23,9 +23,10 @@ const motionUrls = [
   `${import.meta.env.BASE_URL}assets/animations/lumi-idle.vrma`,
   `${import.meta.env.BASE_URL}assets/animations/lumi-walk.vrma`,
   `${import.meta.env.BASE_URL}assets/animations/lumi-happy.vrma`,
+  `${import.meta.env.BASE_URL}assets/animations/lumi-run.vrma`,
 ]
 
-export function VrmLumi({ moving, celebrating = false }: { moving: MutableRefObject<boolean>, celebrating?: boolean }) {
+export function VrmLumi({ moving, running, celebrating = false }: { moving: MutableRefObject<boolean>, running?: MutableRefObject<boolean>, celebrating?: boolean }) {
   const gltf = useLoader(GLTFLoader, avatarUrl, (loader) => loader.register((parser) => new VRMLoaderPlugin(parser)))
   const motionGltfs = useLoader(GLTFLoader, motionUrls, (loader) => loader.register((parser) => new VRMAnimationLoaderPlugin(parser)))
   const vrm = gltf.userData.vrm as VRM | undefined
@@ -41,18 +42,20 @@ export function VrmLumi({ moving, celebrating = false }: { moving: MutableRefObj
 
   useEffect(() => {
     if (!vrm) return
-    const [idleGltf, walkGltf, happyGltf] = motionGltfs
+    const [idleGltf, walkGltf, happyGltf, runGltf] = motionGltfs
     const idleAnimation = idleGltf?.userData.vrmAnimations?.[0]
     const walkAnimation = walkGltf?.userData.vrmAnimations?.[0]
     const happyAnimation = happyGltf?.userData.vrmAnimations?.[0]
-    if (!idleAnimation || !walkAnimation || !happyAnimation) return
+    const runAnimation = runGltf?.userData.vrmAnimations?.[0]
+    if (!idleAnimation || !walkAnimation || !happyAnimation || !runAnimation) return
 
     const nextMixer = new AnimationMixer(vrm.scene)
     const idle = nextMixer.clipAction(createVRMAnimationClip(idleAnimation, vrm)).setLoop(LoopRepeat, Infinity)
     const walk = nextMixer.clipAction(createVRMAnimationClip(walkAnimation, vrm)).setLoop(LoopRepeat, Infinity)
     const happy = nextMixer.clipAction(createVRMAnimationClip(happyAnimation, vrm)).setLoop(LoopOnce, 1)
+    const run = nextMixer.clipAction(createVRMAnimationClip(runAnimation, vrm)).setLoop(LoopRepeat, Infinity)
     happy.clampWhenFinished = true
-    actions.current = { idle, walk, happy }
+    actions.current = { idle, walk, run, happy }
     activeMotion.current = 'idle'
     idle.play()
     mixer.current = nextMixer
@@ -66,7 +69,7 @@ export function VrmLumi({ moving, celebrating = false }: { moving: MutableRefObj
 
   useFrame(({ clock }, delta) => {
     if (!vrm) return
-    const nextMotion = selectAvatarMotion({ moving: moving.current, celebrating })
+    const nextMotion = selectAvatarMotion({ moving: moving.current, running: running?.current ?? false, celebrating })
     if (nextMotion !== activeMotion.current) {
       actions.current[activeMotion.current]?.fadeOut(0.16)
       actions.current[nextMotion]?.reset().setEffectiveWeight(1).fadeIn(0.16).play()
@@ -87,6 +90,7 @@ export function NexusExplorer({ onMove, onInteract, onAbility, abilities = [], i
   const { camera, controls } = useThree()
   const explorer = useRef<Group>(null)
   const moving = useRef(false)
+  const runningMotion = useRef(false)
   const pressedKeys = useRef(new Set<string>())
   const jumpQueued = useRef(false)
   const jump = useRef({ height: 0, velocity: 0 })
@@ -134,6 +138,7 @@ export function NexusExplorer({ onMove, onInteract, onAbility, abilities = [], i
     explorer.current.position.y = -0.7 + jump.current.height
     const direction = movementFromKeys(pressedKeys.current)
     const running = abilities.includes('neon') && (pressedKeys.current.has('ShiftLeft') || pressedKeys.current.has('ShiftRight')) && Boolean(direction[0] || direction[2])
+    runningMotion.current = running
     velocity.current = smoothVelocity(velocity.current, direction, delta, running ? 5.4 : 2.7)
     const [x, , z] = velocity.current
     moving.current = Math.hypot(x, z) > 0.15
@@ -160,7 +165,7 @@ export function NexusExplorer({ onMove, onInteract, onAbility, abilities = [], i
     <group ref={explorer} position={initialPosition} scale={1.08}>
       <group position={[0, 0.55, 0]}>
         <group ref={pulse} visible={false} position={[0, 0.7, 0.6]}><mesh><sphereGeometry args={[0.22, 16, 12]} /><meshBasicMaterial color="#66ffd8" /></mesh><pointLight color="#66ffd8" intensity={6} distance={3} /></group>
-        <VrmLumi moving={moving} />
+        <VrmLumi moving={moving} running={runningMotion} />
         <mesh position={[0, -1.48, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.58, 0.67, 40]} /><meshBasicMaterial color="#b486ff" transparent opacity={0.78} /></mesh>
         <pointLight position={[0, 0.35, 0.25]} color="#7cecff" intensity={1.1} distance={3.5} />
         <Text position={[0, 1.9, 0]} fontSize={0.13} color="#d8faff" anchorX="center">LUMI · EXPLORADORA</Text>

@@ -1,5 +1,6 @@
 import { Float, Text, useGLTF } from '@react-three/drei'
-import { Suspense } from 'react'
+import { Suspense, useMemo } from 'react'
+import { Box3, Vector3 } from 'three'
 import type { Station } from '../data/stations'
 
 function City() {
@@ -31,11 +32,22 @@ function Sanctuary() {
       <mesh position={[0, 4.1, 0]}><coneGeometry args={[0.72, 0.6, 4]} /><meshStandardMaterial color="#8f86b8" metalness={0.35} roughness={0.5} /></mesh>
       <Float speed={0.8} floatIntensity={0.4}><mesh position={[0, 5, 0]}><octahedronGeometry args={[0.42, 0]} /><meshStandardMaterial color="#85ffe3" emissive="#4dffcd" emissiveIntensity={1.5} /></mesh></Float>
     </group>)}
-    {[-1, 1].map((side) => <group key={`tree-${side}`} position={[side * 10, -1.4, 5]}>
-      <mesh position={[0, 1.1, 0]}><cylinderGeometry args={[0.16, 0.27, 2.2, 9]} /><meshStandardMaterial color="#625366" roughness={0.9} /></mesh>
-      {[[-0.45, 2.25, 0], [0.45, 2.45, 0], [0, 3, 0]].map(([x, y, z], i) => <mesh key={i} position={[x, y, z]}><sphereGeometry args={[0.78, 12, 10]} /><meshStandardMaterial color={i === 1 ? '#e8a8d4' : '#b68cd4'} roughness={0.8} /></mesh>)}
-    </group>)}
+    {[-1, 1].map((side) => <Suspense key={side} fallback={null}><Lantern position={[side * 10, 0.2, 5]} /></Suspense>)}
   </group>
+}
+
+function Lantern({ position }: { position: [number, number, number] }) {
+  const model = useGLTF(`${import.meta.env.BASE_URL}assets/lantern.glb`)
+  const normalized = useMemo(() => {
+    const scene = model.scene.clone(true)
+    const box = new Box3().setFromObject(scene)
+    const center = box.getCenter(new Vector3())
+    const size = box.getSize(new Vector3())
+    scene.position.sub(center)
+    const scale = 2.3 / Math.max(size.x, size.y, size.z, 0.01)
+    return { scene, scale }
+  }, [model.scene])
+  return <group position={position}><primitive object={normalized.scene} scale={normalized.scale} /><pointLight position={[0, 0.4, 0]} color="#ffc78f" intensity={4} distance={5} /></group>
 }
 
 function Hangar() {
