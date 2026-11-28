@@ -48,6 +48,7 @@ const resonancePositions: [number, number, number][] = [[-3.5, -0.9, 2], [0, -0.
 function NexusPlaza({ activeCoreIds, onActivateCore, onSelect, finalAvailable, finalComplete, onResonance }: NexusPlazaProps) {
   const stabilized = finalComplete
   const enteredPortal = useRef<Station['id'] | null>(null)
+  const runPad = useRef(false)
 
   const handleExplorerMove = (position: [number, number, number]) => {
     const portalId = portalAtPosition(position, stations)
@@ -121,10 +122,17 @@ function NexusPlaza({ activeCoreIds, onActivateCore, onSelect, finalAvailable, f
     {stations.map((item) => <NexusPortal key={item.id} station={item} unlocked onSelect={onSelect} />)}
     {finalAvailable && resonancePositions.map(([x, y, z], index) => <group key={index} position={[x, y, z]} onClick={(event) => { event.stopPropagation(); onResonance(index) }}>
       <mesh><cylinderGeometry args={[0.72, 0.72, 0.16, 32]} /><meshStandardMaterial color={stations[index].theme.primary} emissive={stations[index].theme.primary} emissiveIntensity={1.8} /></mesh>
-      <Text position={[0, 0.8, 0]} fontSize={0.3} color="#ffffff" anchorX="center">{index + 1}</Text>
+      <Text position={[0, 0.8, 0]} fontSize={0.22} color="#ffffff" anchorX="center">{['1 · CORRER', '2 · PULSO Q', '3 · SALTAR'][index]}</Text>
     </group>)}
     <Text position={[0, 0.55, -2.8]} fontSize={0.22} color="#d8d1ff" anchorX="center">PLAZA CENTRAL · ELIGE UN DISTRITO</Text>
-    <Suspense fallback={null}><NexusExplorer initialPosition={plazaExplorerStart} onMove={handleExplorerMove} onInteract={(position) => {
+    <Suspense fallback={null}><NexusExplorer initialPosition={plazaExplorerStart} abilities={activeCoreIds} onMove={(position) => { if (Math.hypot(position[0] - resonancePositions[0][0], position[2] - resonancePositions[0][2]) >= 1.3) runPad.current = false; handleExplorerMove(position) }} onAbility={(ability, position) => {
+      if (!finalAvailable || finalComplete) return
+      const index = ability === 'run' ? 0 : ability === 'pulse' ? 1 : 2
+      const [x, , z] = resonancePositions[index]
+      if (Math.hypot(position[0] - x, position[2] - z) >= 1.3) return
+      if (ability === 'run') { if (runPad.current) return; runPad.current = true }
+      onResonance(index)
+    }} onInteract={(position) => {
       if (!finalAvailable) return
       const index = resonancePositions.findIndex(([x, , z]) => Math.hypot(position[0] - x, position[2] - z) < 1.25)
       if (index >= 0) onResonance(index)

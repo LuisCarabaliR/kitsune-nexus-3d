@@ -57,8 +57,8 @@ export function moveRoomExplorer(room: RoomId, position: ExplorerPosition, direc
   return hitsStructure ? position : next
 }
 
-export function advanceJump(state: JumpState, jumpQueued: boolean, delta: number): JumpState {
-  const launchVelocity = jumpQueued && state.height === 0 ? 4.6 : state.velocity
+export function advanceJump(state: JumpState, jumpQueued: boolean, delta: number, boost = false): JumpState {
+  const launchVelocity = jumpQueued && state.height === 0 ? (boost ? 6.2 : 4.6) : state.velocity
   const velocity = launchVelocity - 11 * delta
   const height = Math.max(0, state.height + velocity * delta)
 

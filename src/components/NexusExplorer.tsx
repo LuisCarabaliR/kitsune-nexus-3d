@@ -14,6 +14,8 @@ type NexusExplorerProps = {
   onMove?: (position: [number, number, number]) => void
   initialPosition?: [number, number, number]
   onInteract?: (position: [number, number, number]) => void
+  abilities?: readonly ('neon' | 'wind' | 'mecha')[]
+  onAbility?: (ability: 'run' | 'pulse' | 'jump', position: [number, number, number]) => void
 }
 
 const avatarUrl = `${import.meta.env.BASE_URL}assets/lumi-hero.vrm`
@@ -81,7 +83,7 @@ export function VrmLumi({ moving, celebrating = false }: { moving: MutableRefObj
   </group>
 }
 
-export function NexusExplorer({ onMove, onInteract, initialPosition = [0, -0.7, 4.8] }: NexusExplorerProps) {
+export function NexusExplorer({ onMove, onInteract, onAbility, abilities = [], initialPosition = [0, -0.7, 4.8] }: NexusExplorerProps) {
   const { camera, controls } = useThree()
   const explorer = useRef<Group>(null)
   const moving = useRef(false)
@@ -89,6 +91,8 @@ export function NexusExplorer({ onMove, onInteract, initialPosition = [0, -0.7, 
   const jumpQueued = useRef(false)
   const jump = useRef({ height: 0, velocity: 0 })
   const velocity = useRef<[number, number, number]>([0, 0, 0])
+  const pulse = useRef<Group>(null)
+  const pulseAge = useRef(10)
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -97,6 +101,10 @@ export function NexusExplorer({ onMove, onInteract, initialPosition = [0, -0.7, 
         if (!event.repeat) jumpQueued.current = true
       }
       if (event.code === 'KeyE' && !event.repeat && explorer.current) onInteract?.([explorer.current.position.x, 0, explorer.current.position.z])
+      if (event.code === 'KeyQ' && !event.repeat && abilities.includes('wind') && explorer.current) {
+        pulseAge.current = 0
+        onAbility?.('pulse', [explorer.current.position.x, 0, explorer.current.position.z])
+      }
       pressedKeys.current.add(event.code)
     }
     const onKeyUp = (event: KeyboardEvent) => {
@@ -109,15 +117,24 @@ export function NexusExplorer({ onMove, onInteract, initialPosition = [0, -0.7, 
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
     }
-  }, [onInteract])
+  }, [onInteract, onAbility, abilities])
 
   useFrame(({ clock }, delta) => {
     if (!explorer.current) return
-    jump.current = advanceJump(jump.current, jumpQueued.current, delta)
+    const launched = jumpQueued.current && jump.current.height === 0
+    if (launched && abilities.includes('mecha')) onAbility?.('jump', [explorer.current.position.x, 0, explorer.current.position.z])
+    jump.current = advanceJump(jump.current, jumpQueued.current, delta, abilities.includes('mecha'))
     jumpQueued.current = false
+    pulseAge.current += delta
+    if (pulse.current) {
+      pulse.current.visible = pulseAge.current < 0.6
+      pulse.current.position.z = 0.6 + pulseAge.current * 5
+      pulse.current.scale.setScalar(1 + pulseAge.current)
+    }
     explorer.current.position.y = -0.7 + jump.current.height
     const direction = movementFromKeys(pressedKeys.current)
-    velocity.current = smoothVelocity(velocity.current, direction, delta, 2.7)
+    const running = abilities.includes('neon') && (pressedKeys.current.has('ShiftLeft') || pressedKeys.current.has('ShiftRight')) && Boolean(direction[0] || direction[2])
+    velocity.current = smoothVelocity(velocity.current, direction, delta, running ? 5.4 : 2.7)
     const [x, , z] = velocity.current
     moving.current = Math.hypot(x, z) > 0.15
     if (moving.current) {
@@ -133,6 +150,7 @@ export function NexusExplorer({ onMove, onInteract, initialPosition = [0, -0.7, 
       }
       explorer.current.position.x = next[0]
       explorer.current.position.z = next[2]
+      if (running) onAbility?.('run', next)
       if (direction[0] || direction[2]) explorer.current.rotation.y = smoothTurn(explorer.current.rotation.y, Math.atan2(direction[0], direction[2]), delta)
       onMove?.(next)
     }
@@ -141,6 +159,7 @@ export function NexusExplorer({ onMove, onInteract, initialPosition = [0, -0.7, 
   return (
     <group ref={explorer} position={initialPosition} scale={1.08}>
       <group position={[0, 0.55, 0]}>
+        <group ref={pulse} visible={false} position={[0, 0.7, 0.6]}><mesh><sphereGeometry args={[0.22, 16, 12]} /><meshBasicMaterial color="#66ffd8" /></mesh><pointLight color="#66ffd8" intensity={6} distance={3} /></group>
         <VrmLumi moving={moving} />
         <mesh position={[0, -1.48, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.58, 0.67, 40]} /><meshBasicMaterial color="#b486ff" transparent opacity={0.78} /></mesh>
         <pointLight position={[0, 0.35, 0.25]} color="#7cecff" intensity={1.1} distance={3.5} />

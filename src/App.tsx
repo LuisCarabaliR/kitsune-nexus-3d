@@ -61,6 +61,7 @@ export default function App() {
         </header>
         <section className="mission-panel game-mission" aria-label="Misión del Nexus">
           <p className="panel-label">NÚCLEOS DE ENERGÍA</p>
+          <p>Habilidades: {mission.activeCoreIds.includes('neon') ? 'Shift · correr' : 'Carrera bloqueada'} · {mission.activeCoreIds.includes('wind') ? 'Q · pulso' : 'Pulso bloqueado'} · {mission.activeCoreIds.includes('mecha') ? 'Espacio · salto reforzado' : 'Salto reforzado bloqueado'}</p>
           <div className="core-actions">
             {stations.map((station) => {
               const active = isPortalUnlocked(mission, station.id)
@@ -72,7 +73,7 @@ export default function App() {
           {progress === stations.length && <section aria-label="Prueba final de resonancia">
             <p className="panel-label">PRUEBA FINAL · RESONANCIA CENTRAL</p>
             {finalChallenge.complete ? <p className="mission-complete" role="status">¡Nexus estabilizado! Lumi sincronizó el núcleo central.</p> : <>
-              <p>Sincroniza los cristales en este orden: 1 · 3 · 2 · 1. Acerca a Lumi y pulsa E, haz clic en los cristales de la plaza o usa los botones.</p>
+              <p>Sincroniza las plataformas en este orden: 1 · 3 · 2 · 1. En la 1 corre con Shift, en la 3 salta y en la 2 lanza un pulso con Q. También puedes usar E, clic o los botones.</p>
               <p role="status">Secuencia: {finalChallenge.step}/4 · Intentos fallidos: {finalChallenge.mistakes}</p>
               <div className="core-actions">{stations.map((station, index) => <button key={station.id} className="core-action" type="button" onClick={() => setFinalChallenge((current) => playResonance(current, index))}>{index + 1} · {station.name}</button>)}</div>
             </>}

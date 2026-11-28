@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { moveExplorer, moveRoomExplorer, smoothTurn, smoothVelocity } from './roomMovement'
+import { advanceJump, moveExplorer, moveRoomExplorer, smoothTurn, smoothVelocity } from './roomMovement'
 
 describe('expanded Nexus movement', () => {
+  it('launches a higher jump when the Mecha ability is unlocked', () => {
+    const initial = { height: 0, velocity: 0 }
+    expect(advanceJump(initial, true, 0.1, true).height).toBeGreaterThan(advanceJump(initial, true, 0.1).height)
+  })
   it('allows Lumi to reach the outer districts while keeping her inside the map', () => {
     expect(moveExplorer([29, 0, 0], [1, 0, 0], 3)).toEqual([30, 0, 0])
   })
